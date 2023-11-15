@@ -186,7 +186,7 @@ def get_resources(quiet: bool = False, _all: bool = False):
             print('Simulation is active, so real monitoring is unavailable')
         print()
         if IS_RESOURCE:
-            print('!!!! Available for reservation\n'
+            print('!!!! Available for reservation !!!!!!!!! \n'
                   '    CPU  = %.2f (%.2f%s)\n'
                   '    RAM  = %.2f MB\n'
                   '    DISK = %.2f GB\n'
