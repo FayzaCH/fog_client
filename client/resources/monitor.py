@@ -218,7 +218,8 @@ class Monitor(metaclass=SingletonMeta):
                     update_file = True
                     if iperf3_enabled and iface not in hostapd_dict:
                         if port in iperf3_measures:
-                            cap = iperf3_measures[port].get('sent_bps', None)
+                            #cap = iperf3_measures[port].get('sent_bps', None)
+                            cap = iperf3_measures[port].get('bitrate', None)
                             if cap != None:
                                 cap = cap / MEGA
                     if cap == None:

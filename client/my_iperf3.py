@@ -54,6 +54,7 @@ def launch_iperf3(node: Node, listeners: list):
                     # IMPORTANT to close client and free stdout
                     client = None
                     iperf3_measures.setdefault(name, {})
+                    iperf3_measures[name]['bitrate'] = result.bps
                     iperf3_measures[name]['sent_bps'] = result.sent_bps
                     iperf3_measures[name]['received_bps'] = result.received_bps
                     # to avoid overflow
