@@ -3,6 +3,7 @@
 # method is called, so only import after
 
 
+
 from os import getenv
 from threading import Thread, Event
 from time import sleep
@@ -14,6 +15,8 @@ from api import get_iperf3_target
 from utils import port_open
 from logger import console, file
 
+##added imports 
+import json
 
 IPERF3_MODE = getenv('IPERF3_MODE', None)
 IPERF3_SERVER_PORT = 5201
@@ -54,9 +57,10 @@ def launch_iperf3(node: Node, listeners: list):
                     # IMPORTANT to close client and free stdout
                     client = None
                     iperf3_measures.setdefault(name, {})
-                    iperf3_measures[name]['bitrate'] = result.bps
                     iperf3_measures[name]['sent_bps'] = result.sent_bps
                     iperf3_measures[name]['received_bps'] = result.received_bps
+                    bps = result.json['end']['sum_received']['bits_per_second']
+                    iperf3_measures[name]['rcv_bits_per_second'] = bps
                     # to avoid overflow
                     # sleep(1)
                 except:
