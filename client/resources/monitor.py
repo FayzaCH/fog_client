@@ -219,9 +219,9 @@ class Monitor(metaclass=SingletonMeta):
                     if iperf3_enabled and iface not in hostapd_dict:
                         if port in iperf3_measures:
                             #cap = iperf3_measures[port].get('sent_bps', None)
-                            cap = iperf3_measures[port].get('rcv_bits_per_second', None)
-                            if cap != None:
-                                cap = cap / MEGA
+                            cap = iperf3_measures[port].get('received_Mbps', None)
+                            #if cap != None:
+                            #    cap = cap / MEGA
                     if cap == None:
                         if iperf3_enabled and iface not in hostapd_dict:
                             console.warning('Couldn\'t read capacity for %s '
