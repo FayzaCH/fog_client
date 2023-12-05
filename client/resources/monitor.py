@@ -113,11 +113,14 @@ class Monitor(metaclass=SingletonMeta):
         # get network I/O stats on each interface
         # by setting pernic to True
         io = net_io_counters(pernic=True)
-        percpu = self._const_host()
+        #percpu = self._const_host()
+        cpu_usage=self._const_host()
         while self._run:
-            percpu2 = self._var_host(percpu)
+            #percpu2 = self._var_host(percpu)
+            cpu_usage2 = self._var_host(cpu_usage)
             # update network I/O stats for next iteration
-            percpu = percpu2
+            #percpu = percpu2
+            cpu_usage = cpu_usage2
             sleep(self.monitor_period - self._cpu_period)
             io2 = self._var_net(io)
             # update network I/O stats for next iteration
@@ -127,7 +130,8 @@ class Monitor(metaclass=SingletonMeta):
         # get host specs that are constant
         # (CPU count, RAM total, disk total)
 
-        percpu = None
+        #percpu = None
+        cpu_usage = 0
         psutil_mem_total = virtual_memory().total
         if IS_CONTAINER:
             # get usage of each CPU (in nanoseconds)
@@ -141,7 +145,8 @@ class Monitor(metaclass=SingletonMeta):
                               '(%s). Switching to psutil',
                               e.__class__.__name__)
                 file.exception('Unable to read Docker control group for CPU')
-            self.measures['cpu_count'] = int(cpus)
+            #self.measures['cpu_count'] = int(cpus)
+            self.measures['cpu_count'] = float(cpus)
             try:
                 memory_total = float(open(
                     CGROUP_PATH + '/memory/memory.limit_in_bytes').read())
@@ -157,12 +162,15 @@ class Monitor(metaclass=SingletonMeta):
             self.measures['memory_total'] = float(memory_total / MEBI)
         else:
             cpus = cpu_count()
-            self.measures['cpu_count'] = int(cpus)
+            #self.measures['cpu_count'] = int(cpus)
+            self.measures['cpu_count'] = float(cpus)
             self.measures['memory_total'] = float(psutil_mem_total / MEBI)
         self.measures['disk_total'] = float(disk_usage(ROOT_PATH).total / GIBI)
-        return percpu
+        #return percpu
+        return cpu_usage
 
-    def _var_host(self, percpu):
+    #def _var_host(self, percpu):
+    def _var_host(self, cpu_usage):
         # get host specs that are variable
         # (CPU free, RAM free, disk free)
 
@@ -171,15 +179,21 @@ class Monitor(metaclass=SingletonMeta):
             sleep(self._cpu_period)
             # get CPU usage again after sleep
             try:
-                percpu_2 = open(
-                    CGROUP_PATH + '/cpu/cpuacct.usage_percpu').read().split(' ')
-                cpu_usage = 0
-                for i, cpu in enumerate(percpu):
-                    if cpu != '\n':
-                        cpu_usage += ((float(percpu_2[i]) - float(cpu)) /
-                                      (self._cpu_period / NANO))
-                self.measures['cpu_free'] = max(
-                    0.0, float(self.measures['cpu_count'] - cpu_usage))
+                #percpu_2 = open(
+                #    CGROUP_PATH + '/cpu/cpuacct.usage_percpu').read().split(' ')
+                cpu_usage2 = open(
+                    CGROUP_PATH + '/cpu/cpuacct.usage').read().split(' ')
+                cpu_utilization =  0
+                #cpu_usage = 0
+                #for i, cpu in enumerate(percpu):
+                #    if cpu != '\n':
+                #        cpu_usage += ((float(percpu_2[i]) - float(cpu)) /
+                #                      (self._cpu_period / NANO))
+                cpu_utilization = (float(cpu_usage2) - float(cpu_usage)) / (self._cpu_period / NANO )
+                
+                #self.measures['cpu_free'] = max(
+                #    0.0, float(self.measures['cpu_count'] - cpu_usage))
+                self.measures['cpu_free'] = float(self.measures['cpu_count'] - cpu_utilization)
             except:
                 file.exception('')
                 self.measures['cpu_free'] = max(
@@ -200,7 +214,8 @@ class Monitor(metaclass=SingletonMeta):
             self.measures['memory_free'] = float(
                 virtual_memory().available / MEBI)
         self.measures['disk_free'] = float(disk_usage(ROOT_PATH).free / GIBI)
-        return percpu_2
+        #return percpu_2
+        return cpu_usage2
 
     def _const_net(self):
         # get network specs that are constant
