@@ -141,7 +141,7 @@ class Monitor(metaclass=SingletonMeta):
                     CGROUP_PATH + '/cpu/cpuacct.usage_percpu').read().split(' ')
                 cpus = len(percpu) - 1  # don't count '\n'
                 new_cpu_usage = open(
-                    CGROUP_PATH + '/cpu/cpacct.usage').read().split(' ')
+                    CGROUP_PATH + '/cpu/cpuacct.usage').read().split(' ')
             except Exception as e:
                 cpus = cpu_count()
                 console.error('Unable to read Docker control group for CPU '
