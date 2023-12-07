@@ -132,7 +132,7 @@ class Monitor(metaclass=SingletonMeta):
 
         #percpu = None
         #cpu_usage = 0
-        cpu_usage_new = 0
+        new_cpu_usage = 0
         psutil_mem_total = virtual_memory().total
         if IS_CONTAINER:
             # get usage of each CPU (in nanoseconds)
