@@ -238,6 +238,7 @@ class Monitor(metaclass=SingletonMeta):
                     if iperf3_enabled and iface not in hostapd_dict:
                         if port in iperf3_measures:
                             #cap = iperf3_measures[port].get('sent_bps', None)
+                            console.info("iperf3.measures[%s]=%s", port, iperf3_measures[port])
                             cap = iperf3_measures[port].get('received_Mbps', None)
                             #if cap != None:
                             #    cap = cap / MEGA

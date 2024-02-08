@@ -45,7 +45,7 @@ def launch_iperf3(node: Node, listeners: list):
             target, *_ = get_iperf3_target(node, iface)
             if target:
                 client = Client()
-                client.duration = 1
+                client.duration = 10
                 client.verbose = False
                 client.zerocopy = True
                 client.server_hostname = target['ip']
