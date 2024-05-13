@@ -29,7 +29,7 @@
 
 from os import getenv
 from threading import Thread, Event
-from time import time
+from time import time, sleep
 
 from scapy.all import (Packet, ByteEnumField, StrLenField, IntEnumField,
                        StrField, IntField, ConditionalField, AnsweringMachine,
@@ -44,6 +44,7 @@ from logger import console, file
 from utils import all_exit
 from settings import *
 from consts import *
+import random
 
 
 # decoy controller/orchestrator
@@ -436,7 +437,9 @@ class MyProtocolAM(AnsweringMachine):
             send(IP(dst=ORCH_IP) / my_proto, verbose=0, iface=MY_IFACE)
 
     def _respond_data(self, my_proto, ip_src, _req_id, _req):
-        console.info('Executing')
+        execution_time=random.randint(10,50)
+        console.info('Executing for %s', execution_time)
+        sleep(execution_time)
         res = execute(my_proto.data)
         # save result locally
         _req.result = res
