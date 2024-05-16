@@ -124,7 +124,7 @@ try:
                          'parameters (%s and %s) invalid in received '
                          'configuration', str(SIM_EXEC_MIN), str(SIM_EXEC_MAX))
             SIM_EXEC_MIN = 0
-            SIM_EXEC_MAX = 1
+            SIM_EXEC_MAX = 10
     except:
         console.warning('SIMULATOR:EXEC_MAX parameter invalid or missing from '
                         'received configuration. '
@@ -132,7 +132,7 @@ try:
         file.warning('SIMULATOR:EXEC_MAX parameter invalid or missing from '
                      'received configuration', exc_info=True)
         SIM_EXEC_MIN = 0
-        SIM_EXEC_MAX = 1
+        SIM_EXEC_MAX = 10
 except:
     console.warning('SIMULATOR:EXEC_MIN parameter invalid or missing from '
                     'received configuration. '
@@ -140,7 +140,7 @@ except:
     file.warning('SIMULATOR:EXEC_MIN parameter invalid or missing from '
                  'received configuration', exc_info=True)
     SIM_EXEC_MIN = 0
-    SIM_EXEC_MAX = 1
+    SIM_EXEC_MAX = 10
 
 # simulation variables of reserved resources
 _reserved = {

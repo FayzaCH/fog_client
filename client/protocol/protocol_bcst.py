@@ -28,7 +28,7 @@
 
 
 from threading import Thread
-from time import time
+from time import time 
 
 from scapy.all import (Packet, ByteEnumField, StrLenField, IntEnumField,
                        StrField, IntField, IEEEDoubleField, ConditionalField,
@@ -382,6 +382,10 @@ class MyProtocolAM(AnsweringMachine):
 
     def _respond_data(self, my_proto, ip_src, _req):
         console.info('Executing')
+        #execution_time=random.randint(10,50)
+        #console.info('Executing for %s', execution_time)
+        #sleep(execution_time)
+
         res = execute(my_proto.data)
         # save result locally
         _req.result = res
