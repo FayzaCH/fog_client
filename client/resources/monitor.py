@@ -140,9 +140,12 @@ class Monitor(metaclass=SingletonMeta):
             try:
                 percpu = open(
                     CGROUP_PATH + '/cpu/cpuacct.usage_percpu').read().split(' ')
+                console.info('IS_CONTAINER :percpu == %s', percpu)
                 cpus = len(percpu) - 1  # don't count '\n'
+                console.info('cpus == %s', cpus)
                 new_cpu_usage = open(
                     CGROUP_PATH + '/cpu/cpuacct.usage').read().split(' ')
+                console.info('new_cpu_usage == %s', new_cpu_usage)
             except Exception as e:
                 cpus = cpu_count()
                 console.error('Unable to read Docker control group for CPU '
@@ -151,6 +154,7 @@ class Monitor(metaclass=SingletonMeta):
                 file.exception('Unable to read Docker control group for CPU')
             #self.measures['cpu_count'] = int(cpus)
             self.measures['cpu_count'] = float(cpus)
+            console.info('self.measures[cpu_count] == %s', self.measures['cpu_count'])
             try:
                 memory_total = float(open(
                     CGROUP_PATH + '/memory/memory.limit_in_bytes').read())
@@ -165,12 +169,14 @@ class Monitor(metaclass=SingletonMeta):
                     'Unable to read Docker control group for memory')
             self.measures['memory_total'] = float(memory_total / MEBI)
         else:
+            console.info('in IS_NOT_CONTAINER')
             cpus = cpu_count()
             #self.measures['cpu_count'] = int(cpus)
             self.measures['cpu_count'] = float(cpus)
             self.measures['memory_total'] = float(psutil_mem_total / MEBI)
         self.measures['disk_total'] = float(disk_usage(ROOT_PATH).total / GIBI)
         #return percpu
+        console.info('returned value : %s ', new_cpu_usage)
         return new_cpu_usage
 
     #def _var_host(self, percpu):
