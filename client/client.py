@@ -52,7 +52,7 @@ from netapp_cli import netapp_cli
 from logger import console, file
 from consts import (MODE_CLIENT, MODE_RESOURCE, MODE_SWITCH,
                     SEND_TO_BROADCAST, SEND_TO_ORCHESTRATOR)
-
+from time import sleep
 
 # disable flask console messages
 getLogger('werkzeug').disabled = True
@@ -230,6 +230,7 @@ if __name__ == '__main__':
             console.info('GUI started at http://' + MY_IP + ':8050')
 
             # show host resources
+            sleep(10)
             get_resources(_all=True)
 
             # start cli
