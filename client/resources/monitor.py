@@ -131,8 +131,8 @@ class Monitor(metaclass=SingletonMeta):
         # (CPU count, RAM total, disk total)
 
         #percpu = None
-        #cpu_usage = 0
-        new_cpu_usage = 0
+        cpu_usage = 0
+        cpus = 0
         psutil_mem_total = virtual_memory().total
         if IS_CONTAINER:
             # get usage of each CPU (in nanoseconds)
