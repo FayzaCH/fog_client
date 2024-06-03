@@ -57,6 +57,8 @@ MONITOR = Monitor(MONITOR_PERIOD)
 MONITOR.start()
 MEASURES = MONITOR.measures
 
+
+
 # wait for monitor
 while ('cpu_count' not in MEASURES
        or 'cpu_free' not in MEASURES
@@ -166,10 +168,11 @@ def get_resources(quiet: bool = False, _all: bool = False):
             cpu = MEASURES['cpu_free'] - _reserved['cpu']
             ram = MEASURES['memory_free'] - _reserved['ram']
             disk = MEASURES['disk_free'] - _reserved['disk']
+            
     if _all:
         print('\nHost\'s real capacities')
         if not SIM_ON:
-            print('    CPU COUNT  = %d (%.2f%s)\n'
+            print('    CPU COUNT  = %.2f (%.2f%s)\n'
                   '    CPU FREE   = %.2f (%.2f%s)\n'
                   '    RAM TOTAL  = %.2f MB\n'
                   '    RAM FREE   = %.2f MB\n'
