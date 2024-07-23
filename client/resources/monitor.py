@@ -185,6 +185,7 @@ class Monitor(metaclass=SingletonMeta):
         # (CPU free, RAM free, disk free)
 
         percpu_2 = None
+        new_cpu_usage = 0
         cpu_usage = 0
         if IS_CONTAINER:
             sleep(self._cpu_period)
