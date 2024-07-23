@@ -217,7 +217,7 @@ def check_resources(req: Request, quiet: bool = False):
         min_ram = req.get_min_ram()
         min_disk = req.get_min_disk()
         if not quiet:
-            console.info('required(cpu=%.4f, ram=%.2fMB, disk=%.2fGB)' %
+            console.info('required(cpu=%.3f, ram=%.2fMB, disk=%.2fGB)' %
                          (min_cpu, min_ram, min_disk))
         cpu, ram, disk = get_resources(quiet)
         return (cpu - min_cpu >= CPU_THRESHOLD
@@ -237,7 +237,7 @@ def reserve_resources(req: Request):
         min_cpu = req.get_min_cpu()
         min_ram = req.get_min_ram()
         min_disk = req.get_min_disk()
-        console.info('required(cpu=%.4f, ram=%.2fMB, disk=%.2fGB)' %
+        console.info('required(cpu=%.3f, ram=%.2fMB, disk=%.2fGB)' %
                      (min_cpu, min_ram, min_disk))
         cpu, ram, disk = get_resources(quiet=True)
         if (cpu - min_cpu >= CPU_THRESHOLD
