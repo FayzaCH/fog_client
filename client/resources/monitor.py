@@ -131,7 +131,7 @@ class Monitor(metaclass=SingletonMeta):
         # (CPU count, RAM total, disk total)
 
         #percpu = None
-        #cpu_usage = 0
+        cpu_usage = 0
         cpus = 0
         psutil_mem_total = virtual_memory().total
         #console.info('psutil_mem_total == %s ', psutil_mem_total)
