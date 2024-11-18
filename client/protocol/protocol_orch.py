@@ -32,6 +32,7 @@ from threading import Thread, Event
 from time import time, sleep
 from datetime import datetime, timedelta
 import subprocess
+from subprocess import run
 import numpy as np
 
 from scapy.all import (Packet, ByteEnumField, StrLenField, IntEnumField,
@@ -519,92 +520,6 @@ def send_request(cos_id: int, data: bytes):
             dres = None
             while not dres and dreq_rt and not req.dres_at:
                 console.info('Send data exchange request to %s', req.host)
-                console.info('starting IPERF MESSAGE EXCHANGE ')
-
-                # depending on the cos_id value, launch an ipref exchange between this host and req_host reproducing closely the intendend class of service
-                if cos_id == 1:
-                    #best_effort - download a web page of 3MB (maximum size of web page) under a limited bandwidth (e.g 100K bandwidth limit)
-                    subprocess.run(['iperf', '-c', req.host, '-R', '-b', '100K', '-n', '3M', '-l', '12800'])
-
-                elif cos_id == 2:
-                    #Send an image (a person’s face) of about 5MB, run the image recognition program (process of about 500 ms) and receive the result (about 500K data)
-                    subprocess.run(['iperf', '-c', req.host, '-u', '-n', '5M'], capture_output=True)
-                    sleep(np.random.uniform(2,5)) #image processing lasts less than a few seconds
-                    subprocess.run(['iperf', '-c', req.host, '-u', '-R', '-n', '500K'], capture_output=True)
-                 
-                elif cos_id == 3:
-                    #streaming : downloading video file under a convenient bandwidth (100m, for example)
-                    # 
-                    subprocess.run(['iperf', '-c', req.host, '-R', '-u', '--isochronous=60:100m,10m', '--ipg=0.05', '-n', '200m'], capture_output=True)
-                
-                elif cos_id == 4:
-                    #conversational (VoIP) send and receive voip data during a time period  (4 mn is the average call duration)
-                    #each speaker talks for a period of 10 to 20 sec, between two consecutive speaking we apply a period of silence (0-2 sec) 
-                 
-                    end_time = datetime.now() + timedelta(minutes=4) #current time plus 4 minutes
-                    while datetime.now() < end_time:
-                        speech_time = np.random.uniform(10,20)
-                        subprocess.run(['iperf', '-c', req.host, '-u', '-S', '0xC0', '-l', '200', '-t', str(speech_time), '-b', '200k'], capture_output=True)
-                        sleep(np.random.uniform(0,2)) #delay between two consecutive messages
-                        speech_time = np.random.uniform(10,20)
-                        subprocess.run(['iperf', '-c', req.host, '-u','-R', '-S', '0xC0', '-l', '200', '-t', str(speech_time), '-b', '200k'], capture_output=True)
-                        sleep(np.random.uniform(0,2))
-        
-                elif cos_id == 5:
-                    #interactive Example IpTV/WebTV
-
-                    #surfing time : 0 to 1mn, channel changing between 1 to 4 seconds
-                    surf_time = np.random.uniform(10,60)
-                    end_surf_time = datetime.now() + timedelta(seconds = surf_time)
-                    #print('---- surf_time : ', surf_time)
-                    #print('---- end_surf_time : ', end_surf_time)
-                    while datetime.now() < end_surf_time:
-                        change_time = np.random.uniform(1,4)
-                        #print('**** change_time: ',change_time)
-                        #print("iperf -u -c req.host -R -S 0xC0 -t", str(change_time))
-                        #Interactive-Video (AF41) – ToS value 0x88
-                        subprocess.run(['iperf','-u', '-c', req.host, '-R', '-S', '0x88', '-t', str(change_time)])
-
-                    #visualization time  : 1 mn to 1 hour
-                    visualization_time = np.random.uniform(60,3600) #(60,90) pour les tests
-                    #print('----- visualiZatio_time = ', visualiZation_time)
-                    #print("iperf -u -c req.host -R -S 0xC0 -t", visualiZation_time)
-                    subprocess.run(['iperf', '-u', '-c', req.host, '-R', '-S', '0x88', '-t', str(visualization_time)])
-
-                elif cos_id == 6:
-                    #real-time - video game example : within a long period of time (average time of a game : 1 hour) consequently exchange data (average 
-                    # size 100MB=100000 MB) between the client and the server (a message each 10 s) , size of the message 100000/(3600s/10s) = 277 KB
-                    end_time = datetime.now() + timedelta(hours=1) #current time plus 1 hour
-                    while datetime.now() < end_time :
-                        subprocess.run(["iperf3", "-c", req.host, "-u", "-n", "100K"], capture_output=True)
-                        sleep(np.random.uniform(1,5))
-                        subprocess.run(["iperf3", "-c", req.host, "-R", "-u", "-n", "100K"], capture_output=True)
-                        sleep(np.random.uniform(5,10))
-
-                elif cos_id == 7:
-                    # mission_critical example (e-health)  During a time period (30 seconds in this example) periodically sends short messages from client node
-                    # to server node, representing the patient’s vital signs.  Then randomly receive or not a recommendation from the server (we set the 
-                    # probability to receive recommendations to the value of 0.1, since a recommendation means applying changes or triggering some actions on 
-                    # the care protocol)
-                    t_end = time() + 60 * 10 #experience duration 10 mn
-
-                    while time() < t_end:
-                        send_recommendation = np.random.choice([True, False],10, p=[0.1, 0.9])  #10 probability the sent value triggers a recommendation send-back
-                        #print('sendrecommendation values', send_recommendation)
-                        #print('sending vital signs every 10 seconds')
-                        for i in range (10):
-                            #print(str(i) +': run iperf -c localhost -n 2K')
-                            subprocess.run(['iperf', '-c', req.host, '-n', '2K'], capture_output=True)
-                            #print('send recommendation =', send_recommendation[i])
-                            if send_recommendation[i] :
-                                #print('recieving recommendation \n iperf -c localhost -R -l 500K')
-                                subprocess.run(['iperf', '-c', req.host, '-R', '-l', '500K'],capture_output=True)
-                        sleep(30)
-    
-                else:
-                        console.warning("cos_id not between 1 and 7")
-
-                console.info('ending IPERF MESSAGES EXCHANGE')
 
                 if PROTO_VERBOSE:
                     print(req)
