@@ -29,11 +29,8 @@
 
 from os import getenv
 from threading import Thread, Event
-from time import time, sleep
+from time import time
 from datetime import datetime, timedelta
-import subprocess
-from subprocess import run
-import numpy as np
 
 from scapy.all import (Packet, ByteEnumField, StrLenField, IntEnumField,
                        StrField, IntField, ConditionalField, AnsweringMachine,

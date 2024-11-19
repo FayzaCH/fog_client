@@ -386,7 +386,7 @@ class MyProtocolAM(AnsweringMachine):
         #console.info('Executing for %s', execution_time)
         #sleep(execution_time)
 
-        res = execute(my_proto.data)
+        res = execute(my_proto.data, ip_src, _req.cos.id)
         # save result locally
         _req.result = res
         _req.state = DRES
