@@ -381,12 +381,13 @@ class MyProtocolAM(AnsweringMachine):
             send(IP(dst=ip_src) / my_proto, verbose=0, iface=MY_IFACE)
 
     def _respond_data(self, my_proto, ip_src, _req):
-        console.info('Executing')
+        #console.info('Executing')
         #execution_time=random.randint(10,50)
         #console.info('Executing for %s', execution_time)
         #sleep(execution_time)
-
+        console.info('Executing CoS: %s  for %s ip_src', str(_req.cos.id), str(ip_src) )       
         res = execute(my_proto.data, ip_src, _req.cos.id)
+
         # save result locally
         _req.result = res
         _req.state = DRES
