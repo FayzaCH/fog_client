@@ -8,7 +8,6 @@ from client.consts import MODE_CLIENT, MODE_RESOURCE
 from client.client import connect
 from client.logger import console, file
 from client.utils import all_exit
-
 import os
 
 _verbose = getenv('VERBOSE', '').upper()
@@ -135,8 +134,7 @@ def _send_requests():
             Thread(target=_send_request, args=(
                 index, COS_ID, DATA)).start()
         sleep(INTERVAL)
-    os._exit(1)    
-
+    os._exit(1)
 
 for thread in range(THREADS):
     Thread(target=_send_requests).start()

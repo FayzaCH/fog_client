@@ -134,7 +134,7 @@ class Monitor(metaclass=SingletonMeta):
         cpu_usage = 0
         cpus = 0
         psutil_mem_total = virtual_memory().total
-        console.info('psutil_mem_total == %s ', psutil_mem_total)
+        #console.info('psutil_mem_total == %s ', psutil_mem_total)
         if IS_CONTAINER:
             # get usage of each CPU (in nanoseconds)
             try:

@@ -30,7 +30,7 @@
 from os import getenv
 from threading import Thread, Event
 from time import time
-#from time import sleep
+from datetime import datetime, timedelta
 
 from scapy.all import (Packet, ByteEnumField, StrLenField, IntEnumField,
                        StrField, IntField, ConditionalField, AnsweringMachine,
@@ -440,8 +440,10 @@ class MyProtocolAM(AnsweringMachine):
         #execution_time=random.randint(10,50)
         #console.info('Executing for %s', execution_time)
         #sleep(execution_time)
-        console.info('Executing')
-        res = execute(my_proto.data)
+        
+        console.info('Executing CoS: %s  for %s ip_src', str(_req.cos.id), str(ip_src) )
+        res = execute(my_proto.data,ip_src, _req.cos.id)
+        
         # save result locally
         _req.result = res
         _req.state = DRES
@@ -517,6 +519,7 @@ def send_request(cos_id: int, data: bytes):
             dres = None
             while not dres and dreq_rt and not req.dres_at:
                 console.info('Send data exchange request to %s', req.host)
+
                 if PROTO_VERBOSE:
                     print(req)
                 dreq_rt -= 1
