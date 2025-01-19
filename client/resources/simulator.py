@@ -286,9 +286,8 @@ def run_iperf2_cmd(cmd:str):
 
 def execute(data: bytes, ip_src, cos_id):
     '''
-        Simulate execution of network application by doing nothing for a 
-        determined period of time (by default randomly generated between 0s 
-        and 1s).
+        Simulate execution of network application by exchanging iperf messages  
+        determined by the Class of Service type).
 
         Returns result.
     '''
@@ -298,23 +297,25 @@ def execute(data: bytes, ip_src, cos_id):
     #sleep(uniform(SIM_EXEC_MIN, SIM_EXEC_MAX))
     console.info('starting IPERF MESSAGE EXCHANGE ')
     ## depending on the cos_id value, launch an ipref exchange between this host and req_host reproducing closely the intendend class of service
+    iperf_path='/bin/iperf' #for both container and code client
+    
     if cos_id == 1:
     #best_effort - download a web page of 3MB (maximum size of web page) under a limited bandwidth (e.g 100K bandwidth limit)
         #cmd = ['/home/ubuntu/bin/iperf', '-c', req.host ,'-R', '-b', '100K', '-n', '3M', '-l', '12800']
-        run_iperf2_cmd(['/home/ubuntu/bin/iperf', '-c' , ip_src, '-b', '100K', '-n', '3M', '-l', '12800','-i', '5'])
+        run_iperf2_cmd([iperf_path, '-c' , ip_src, '-b', '100K', '-n', '3M', '-l', '12800','-i', '5'])
+
 
     elif cos_id == 2:
     #Send an image (a person’s face) of about 5MB, run the image recognition program (process of about 500 ms) and receive the result (about 500K data)
     #cmd = ['/home/ubuntu/bin/iperf', '-c', req.host, '-u', '-n', '5M']
-        run_iperf2_cmd(['/home/ubuntu/bin/iperf', '-c', ip_src,'-R', '-u', '-n', '1M','-i','5'])
-        sleep(random.randinit(5,10)) #image processing lasts less than a few seconds
-        #cmd=['/home/ubuntu/bin/iperf', '-c', req.host, '-u', '-R', '-n', '500K']
-        run_iperf2_cmd(['/home/ubuntu/bin/iperf', '-c', ip_src, '-u', '-n', '500K','-i', '5'])
+        run_iperf2_cmd([iperf_path, '-c', ip_src,'-R', '-u', '-n', '1M','-i','5'])
+        sleep(random.randint(5,10)) #image processing lasts less than a few seconds
+        run_iperf2_cmd([iperf_path, '-c', ip_src, '-u', '-n', '500K','-i', '5'])
 
     elif cos_id == 3:
         #streaming : downloading video file of 200m under a convenient bandwidth (10m, for example)
         #cmd = ['/home/ubuntu/bin/iperf', '-c', req.host, '-R', '-u', '--isochronous=60:10m,1m', '-n', '200m', '-l', '1400']
-        run_iperf2_cmd(['/home/ubuntu/bin/iperf', '-c', ip_src, '-u', '--isochronous=60:10m,1m', '-n', '200m', '-l', '1400','-i','5'])
+        run_iperf2_cmd([iperf_path, '-c', ip_src, '-u', '--isochronous=60:10m,1m', '-n', '200m', '-l', '1400','-i','5'])
 
     elif cos_id == 4:
          #conversational (VoIP) send and receive voip data during a time period  (4 mn is the average call duration)
@@ -323,11 +324,11 @@ def execute(data: bytes, ip_src, cos_id):
          while datetime.now() < end_time:
              speech_time = np.random.uniform(10,20)
              #cmd = ['/home/ubuntu/bin/iperf', '-c', req.host, '-u', '-S', '0xC0', '-l', '200', '-t', str(speech_time), '-b', '200k']
-             run_iperf2_cmd(['/home/ubuntu/bin/iperf', '-c', ip_src, '-R', '-u', '-S', '0xC0', '-l', '200', '-t', str(speech_time), '-b', '200k','-i', '10'])
+             run_iperf2_cmd([iperf_path, '-c', ip_src, '-R', '-u', '-S', '0xC0', '-l', '200', '-t', str(speech_time), '-b', '200k','-i', '10'])
              sleep(np.random.uniform(0,2)) #delay between two consecutive messages
              speech_time = np.random.uniform(10,20)
              #cmd = ['/home/ubuntu/bin/iperf', '-c', req.host, '-u','-R', '-S', '0xC0', '-l', '200', '-t', str(speech_time), '-b', '200k']
-             run_iperf2_cmd(['/home/ubuntu/bin/iperf', '-c', ip_src, '-u', '-S', '0xC0', '-l', '200', '-t', str(speech_time), '-b', '200k', '-i','10'])
+             run_iperf2_cmd([iperf_path, '-c', ip_src, '-u', '-S', '0xC0', '-l', '200', '-t', str(speech_time), '-b', '200k', '-i','10'])
              sleep(np.random.uniform(0,2))
     elif cos_id == 5:
          #interactive Example IpTV/WebTV
@@ -338,11 +339,11 @@ def execute(data: bytes, ip_src, cos_id):
              change_time = np.random.uniform(1,4)
              #Interactive-Video (AF41) – ToS value 0x88
              #cmd = ['/home/ubuntu/bin/iperf','-u', '-c', req.host, '-R', '-S', '0x88', '-t', str(change_time)]
-             run_iperf2_cmd(['/home/ubuntu/bin/iperf','-u', '-c', ip_src, '-S', '0x88', '-t', str(change_time),'-i','10'])
+             run_iperf2_cmd([iperf_path,'-u', '-c', ip_src, '-S', '0x88', '-t', str(change_time),'-i','10'])
              #visualization time  : 1 mn to 1 hour
              visualization_time = np.random.uniform(60,3600) #(60,90) pour les tests
              #cmd = ['/home/ubuntu/bin/iperf', '-u', '-c', req.host, '-R', '-S', '0x88', '-t', str(visualization_time)]
-             run_iperf2_cmd(['/home/ubuntu/bin/iperf', '-u', '-c', ip_src, '-S', '0x88', '-t', str(visualization_time),'-i','10'])
+             run_iperf2_cmd([iperf_path, '-u', '-c', ip_src, '-S', '0x88', '-t', str(visualization_time),'-i','10'])
 
     elif cos_id == 6:
              #real-time - video game example : within a long period of time (average time of a game : 1 hour) consequently exchange data (average 
@@ -350,10 +351,10 @@ def execute(data: bytes, ip_src, cos_id):
              end_time = datetime.now() + timedelta(hours=1) #current time plus 1 hour
              while datetime.now() < end_time :
                  #cmd = ['/home/ubuntu/bin/iperf', '-c', req.host, '-u', '-n', '100K']
-                 run_iperf2_cmd(['/home/ubuntu/bin/iperf', '-c', ip_src, '-R','-u', '-n', '100K','-i','10'])
+                 run_iperf2_cmd([iperf_path, '-c', ip_src, '-R','-u', '-n', '100K','-i','10'])
                  sleep(np.random.uniform(1,5))
                  #cmd = ['/home/ubuntu/bin/iperf', '-c', req.host, '-R', '-u', '-n', '100K']
-                 run_iperf2_cmd(['/home/ubuntu/bin/iperf', '-c', ip_src, '-u', '-n', '100K','-i','10'])
+                 run_iperf2_cmd([iperf_path, '-c', ip_src, '-u', '-n', '100K','-i','10'])
                  sleep(np.random.uniform(5,10))
 
     elif cos_id == 7:
@@ -366,10 +367,10 @@ def execute(data: bytes, ip_src, cos_id):
                         send_recommendation = np.random.choice([True, False],10, p=[0.1, 0.9])  #10 probability the sent value triggers a recommendation send-back
                         for i in range (10):
                             #cmd = ['/home/ubuntu/bin/iperf', '-c', req.host, '-n', '2K']
-                            run_iperf2_cmd(['/home/ubuntu/bin/iperf', '-c', ip_src, '-R','-n', '2K','-i','10'])
+                            run_iperf2_cmd([iperf_path, '-c', ip_src, '-R','-n', '2K','-i','10'])
                             if send_recommendation[i] :
                                 #cmd  = ['/home/ubuntu/bin/iperf', '-c', req.host, '-R', '-l', '500K']
-                                run_iperf2_cmd(['/home/ubuntu/bin/iperf', '-c', ip_src, '-l', '500K','-i','10'])
+                                run_iperf2_cmd([iperf_path, '-c', ip_src, '-l', '500K','-i','10'])
                         sleep(30)
     else:
         console.warning("cos_id not between 1 and 7")
