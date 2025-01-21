@@ -1,6 +1,6 @@
 FROM fog_client:latest
 RUN apt-get install -y \
-    iputils-ping net-tools iproute2 ethtool iw wireless-tools\
+    iputils-ping net-tools iproute2 ethtool iw wireless-tools procps \
     curl wget \
     nano vim \
     xterm
