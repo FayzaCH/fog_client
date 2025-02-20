@@ -6,6 +6,7 @@
 from threading import Thread
 
 from consts import MODE_RESOURCE
+from iperf2 import iperf2_server, iperf2_kill
 
 
 def _list_cos(cos_names: dict):
@@ -42,6 +43,17 @@ def netapp_cli(mode: str, send_request, cos_names: dict):
                 print('This CoS doesn\'t exist')
                 _list_cos(cos_names)
             else:
-                Thread(target=_send_request,
+                #lauch iperf2 server before sending data exchange request
+                iperf2_tcp = iperf2_server(5001, True, False)
+                iperf2_udp = iperf2_server(5001,True,True)
+                iperf2_tcp.launch()
+                iperf2_udp.launch()
+                ######
+
+                t = Thread(target=_send_request,
                        args=(send_request, cos_names,
-                             cos_id, b'data + program'), daemon=True).start()
+                             cos_id, b'data + program'), daemon=True)
+                t.start()
+                t.join()
+                iperf2_kill()    
+        

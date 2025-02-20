@@ -42,9 +42,8 @@ from model import Request
 from logger import console, file
 from utils import all_exit
 
-from subprocess import run
 from datetime import datetime, timedelta
-from subprocess import run
+import subprocess
 import numpy as np
 import random
 
@@ -278,11 +277,14 @@ def free_resources(req: Request):
         get_resources()
         return True
 def run_iperf2_cmd(cmd:str):
-    print('cmd = %s',cmd)
+    #print('cmd = %s',cmd)
+    process= subprocess.Popen(cmd)
     try:
-        run(cmd)
-    except FileNotFoundError:
-        print('iperf not found.')
+        out, err = process.communicate()
+        if err:
+            print("Erreur : ",process.returncode)
+    except OSError as e:
+        print("OSError : ", e.strerror)
 
 def execute(data: bytes, ip_src, cos_id):
     '''
@@ -306,7 +308,7 @@ def execute(data: bytes, ip_src, cos_id):
 
 
     elif cos_id == 2:
-    #Send an image (a person’s face) of about 5MB, run the image recognition program (process of about 500 ms) and receive the result (about 500K data)
+    #cpu-bound : Send an image (a person's face) of about 5MB, run the image recognition program (process of about 500 ms) and receive the result (about 500K data)
     #cmd = ['/home/ubuntu/bin/iperf', '-c', req.host, '-u', '-n', '5M']
         run_iperf2_cmd([iperf_path, '-c', ip_src,'-R', '-u', '-n', '1M','-i','5'])
         sleep(random.randint(5,10)) #image processing lasts less than a few seconds
@@ -346,7 +348,7 @@ def execute(data: bytes, ip_src, cos_id):
              run_iperf2_cmd([iperf_path, '-u', '-c', ip_src, '-S', '0x88', '-t', str(visualization_time),'-i','10'])
 
     elif cos_id == 6:
-             #real-time - video game example : within a long period of time (average time of a game : 1 hour) consequently exchange data (average 
+             # real-time - video game example : within a long period of time (average time of a game : 1 hour) consequently exchange data (average 
              # size 100MB=100000 MB) between the client and the server (a message each 10 s) , size of the message 100000/(3600s/10s) = 277 KB
              end_time = datetime.now() + timedelta(hours=1) #current time plus 1 hour
              while datetime.now() < end_time :
