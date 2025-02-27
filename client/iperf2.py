@@ -29,17 +29,17 @@ class iperf2_server:
             lines_iperf = [line for line in lines if "iperf" in line]
 
             if lines_iperf:
-                #print("Processus iperf trouvés :")
+                #print("Iperf Process found  :")
                 for line in lines_iperf:
-                    print(line)
+                    #print(line)
                     if "-u" in line:
-                        #print("    L'option -u est utilisée (mode UDP).")
+                        #print("    -u option is used  (UDP mode).")
                         iperf2_udp= True
                     else:
-                        #print("    L'option -u n'est pas utilisée (mode TCP ou autre).")
+                        #print("    -u option isn't used (TCP mode).")
                         iperf2_tcp= True
             else:
-                print("Aucun processus iperf trouvé.")
+                print("    No iperf processes found.")
             return iperf2_tcp,iperf2_udp
 
         except subprocess.CalledProcessError as e:
@@ -62,15 +62,15 @@ class iperf2_server:
             #output = subprocess.Popen(cmd,stdout=subprocess.PIPE)
             if self.udp and not iperf2_udp:
                 process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                my_pid, err = process.communicate()
-                print("erreur :",str(err))
-                print("server iperf2 udp  launched on", str(self.port),"with pid", str(my_pid))
+                my_pid = process.pid
+                #print("returned msg :" ,process.communicate()[1].decode("utf-8").strip('\n'))
+                #print("server iperf2 udp launched on", str(self.port),"with pid", str(my_pid))
             else:
                 if not iperf2_tcp:
                     process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                    my_pid, err = process.communicate()
-                    print("erreur :",str(err))
-                    print("server iperf2 tcp launched on", str(self.port),"with pid", str(my_pid))  
+                    my_pid = process.pid
+                    #print("returned message :",str(process.communicate()[1].decode("utf-8").strip('\n')))
+                    #print("server iperf2 tcp launched on", str(self.port),"with pid", str(my_pid))  
 
         except subprocess.CalledProcessError as e:
             print(f"Command failed with return code {e.returncode}")
