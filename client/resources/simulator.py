@@ -299,7 +299,7 @@ def execute(data: bytes, ip_src, cos_id):
     #sleep(uniform(SIM_EXEC_MIN, SIM_EXEC_MAX))
     console.info('starting IPERF MESSAGE EXCHANGE ')
     ## depending on the cos_id value, launch an ipref exchange between this host and req_host reproducing closely the intendend class of service
-    iperf_path='/bin/iperf' #for both container and code client
+    iperf_path='iperf' #for both container and code client
     
     if cos_id == 1:
     #best_effort - download a web page of 3MB (maximum size of web page) under a limited bandwidth (e.g 100K bandwidth limit)
