@@ -2,7 +2,7 @@ import subprocess
 import os
 import signal
 import re
-
+from logger import console, file
 '''
 classe iperf2_server(port_number, Daemon_Mode, UDP_protocol)
 port_number : default "5001"
@@ -29,7 +29,7 @@ class iperf2_server:
             lines_iperf = [line for line in lines if "iperf" in line]
 
             if lines_iperf:
-                #print("Iperf Process found  :")
+                #console.info('Iperf Process found  :')
                 for line in lines_iperf:
                     #print(line)
                     if "-u" in line:
@@ -39,13 +39,14 @@ class iperf2_server:
                         #print("    -u option isn't used (TCP mode).")
                         iperf2_tcp= True
             else:
-                print("    No iperf processes found.")
+                console.info('    No iperf processes found. Launching iperf server')
+                file.info('    No iperf processes found. Launching iperf server')
             return iperf2_tcp,iperf2_udp
 
         except subprocess.CalledProcessError as e:
-            print(f"Error when  running ps: {e}")
+            console.error('Error when  running ps: %s',str(e))
         except FileNotFoundError:
-            print("ps command not found.")
+            console.error("ps command not found.")
 
 
     def launch(self):
@@ -63,17 +64,15 @@ class iperf2_server:
             if self.udp and not iperf2_udp:
                 process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 my_pid = process.pid
-                #print("returned msg :" ,process.communicate()[1].decode("utf-8").strip('\n'))
-                #print("server iperf2 udp launched on", str(self.port),"with pid", str(my_pid))
+                console.info('Iperf launched in udp mode on %s with pid %s', str(self.port),str(my_pid))
             else:
                 if not iperf2_tcp:
                     process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                     my_pid = process.pid
-                    #print("returned message :",str(process.communicate()[1].decode("utf-8").strip('\n')))
-                    #print("server iperf2 tcp launched on", str(self.port),"with pid", str(my_pid))  
+                    console.info('Iperf launched in udp mode on %s with pid %s', str(self.port),str(my_pid)) 
 
         except subprocess.CalledProcessError as e:
-            print(f"Command failed with return code {e.returncode}")
+            console.error('Command failed with return code %s', str(e))
 
 
 def iperf2_kill():
@@ -85,8 +84,8 @@ def iperf2_kill():
         #print("pids = ",str(pids))
         for p in pids:
             os.kill(int(p),signal.SIGTERM)
-            print("iperf2 with pid =",str(p),"killed")
+            console.info('iperf2 with pid  %s killed',str(p))
     except Exception as e:
-        print("iperf2 process not found", str(e))
+        console.warning('iperf2 process not found %s',str(e))
         return
 

@@ -282,9 +282,9 @@ def run_iperf2_cmd(cmd:str):
     try:
         out, err = process.communicate()
         if err:
-            print("Erreur : ",process.returncode)
+            console.error('Erreur : %s',str(process.returncode))
     except OSError as e:
-        print("OSError : ", e.strerror)
+        console.error('OSError : %s', str(e.strerror))
 
 def execute(data: bytes, ip_src, cos_id):
     '''
