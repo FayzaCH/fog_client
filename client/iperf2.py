@@ -54,7 +54,7 @@ class iperf2_server:
         #print("iperf2_tcp: ",iperf2_tcp, "iperf2_udp: ", iperf2_udp)
 
         try:
-            cmd=["/bin/iperf","-s","-p",str(self.port),"-i","1"]
+            cmd=["iperf","-s","-p",str(self.port),"-i","1"]
             if self.daemon:
                 cmd.append("-D")
             if self.udp:
