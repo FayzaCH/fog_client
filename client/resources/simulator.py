@@ -293,8 +293,8 @@ def execute(data: bytes, ip_src, cos_id):
 
         Returns result.
     '''
-    console.info(' exeute cos_id id  %s  with ip_src  %s', str(cos_id), str(ip_src))
-    #console.info('in exeute Min = %s  Max = %s', str(SIM_EXEC_MIN), str(SIM_EXEC_MAX))
+    console.info(' execute cos_id id  %s  with ip_src  %s', str(cos_id), str(ip_src))
+    #console.info('in execute Min = %s  Max = %s', str(SIM_EXEC_MIN), str(SIM_EXEC_MAX))
 
     #sleep(uniform(SIM_EXEC_MIN, SIM_EXEC_MAX))
     console.info('starting IPERF MESSAGE EXCHANGE ')
@@ -342,15 +342,15 @@ def execute(data: bytes, ip_src, cos_id):
              #Interactive-Video (AF41) – ToS value 0x88
              #cmd = ['/home/ubuntu/bin/iperf','-u', '-c', req.host, '-R', '-S', '0x88', '-t', str(change_time)]
              run_iperf2_cmd([iperf_path,'-u', '-c', ip_src, '-S', '0x88', '-t', str(change_time),'-i','10'])
-             #visualization time  : 1 mn to 1 hour
-             visualization_time = np.random.uniform(60,3600) #(60,90) pour les tests
+             #visualization time  : 1 mn to 1 hour (60,3600) but max of 5mn=300s for tests
+             visualization_time = np.random.uniform(60,300) 
              #cmd = ['/home/ubuntu/bin/iperf', '-u', '-c', req.host, '-R', '-S', '0x88', '-t', str(visualization_time)]
              run_iperf2_cmd([iperf_path, '-u', '-c', ip_src, '-S', '0x88', '-t', str(visualization_time),'-i','10'])
 
     elif cos_id == 6:
-             # real-time - video game example : within a long period of time (average time of a game : 1 hour) consequently exchange data (average 
+             # real-time - video game example : within a long period of time (average time of a game : 1 hour (5mnutes for tests) consequently exchange data (average 
              # size 100MB=100000 MB) between the client and the server (a message each 10 s) , size of the message 100000/(3600s/10s) = 277 KB
-             end_time = datetime.now() + timedelta(hours=1) #current time plus 1 hour
+             end_time = datetime.now() + timedelta(minutes=5) #current time plus 1 hour (5mn for tests)
              while datetime.now() < end_time :
                  #cmd = ['/home/ubuntu/bin/iperf', '-c', req.host, '-u', '-n', '100K']
                  run_iperf2_cmd([iperf_path, '-c', ip_src, '-R','-u', '-n', '100K','-i','10'])
