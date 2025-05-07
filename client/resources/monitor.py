@@ -357,7 +357,13 @@ class Monitor(metaclass=SingletonMeta):
                     except:
                         max_speed = 0
                     self.measures.setdefault(port, {})
-                    self.measures[port]['capacity'] = max_speed
+                    # make station's capacity fixe
+                    if 'capacity' in self.measures[port] :
+                        last_cap =  self.measures[port]['capacity']
+                    else :
+                        last_cap = 0
+                    self.measures[port]['capacity'] = max(last_cap, max_speed)
+                    ##
                 if port in self.measures:
                     max_speed = self.measures[port]['capacity'] * MEGA
                 # calculate free bandwidth
