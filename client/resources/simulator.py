@@ -276,16 +276,46 @@ def free_resources(req: Request):
             _reserved['disk'] = 0.0
         get_resources()
         return True
+    
 def run_iperf2_cmd(cmd:str):
     #print('cmd = %s',cmd)
-    process= subprocess.Popen(cmd)
+    process = None
     try:
+        process= subprocess.Popen(cmd, shell = True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
         out, err = process.communicate()
-        if err:
-            console.error('Erreur : %s',str(process.returncode))
+        if process.returncode !=0:
+            console.error(f"The command '{ cmd }' failed with code error :{process.returncode} returned.")
+            if out:
+                console.error(f"Stdout : {out.strip()}")
+            if err:
+                console.error(f"Stderr : {err.strip()}")
+        else:
+            console.info(f" The command '{cmd} executed seccessfuly")
+            if out:
+                console.info(f"Stdout : {out.strip()}")
+            if err:
+                console.warning(f"Stderr : (Warnings) : {err.strip()}")
+        return out, err, process.returncode
+    except FileNotFoundError:
+        console.error(f"Error : Command '{ cmd }' not found")
+        return None, None, -2
     except OSError as e:
-        console.error('OSError : %s', str(e.strerror))
-
+        console.error(f"OSError during the execution of '{cmd}': '{e.strerror}' (code :'{e.errno}')")
+        return None, None, -3
+    except Exception as e:
+        console.error(f"An unexpected error occurred when executing the command '{ cmd }'.")
+        return None, None, -4
+    finally:
+        if process:
+            if process.stdout:
+                process.stdout.close()
+            if process.stderr:
+                process.stderr.close()
+            if process.poll() is None:
+                #force iperf process to terminate
+                process.kill()
+                process.wait()        
+    
 def execute(data: bytes, ip_src, cos_id):
     '''
         Simulate execution of network application by exchanging iperf messages  
@@ -295,90 +325,90 @@ def execute(data: bytes, ip_src, cos_id):
     '''
     console.info(' execute cos_id id  %s  with ip_src  %s', str(cos_id), str(ip_src))
     #console.info('in execute Min = %s  Max = %s', str(SIM_EXEC_MIN), str(SIM_EXEC_MAX))
-
     #sleep(uniform(SIM_EXEC_MIN, SIM_EXEC_MAX))
     console.info('starting IPERF MESSAGE EXCHANGE ')
     ## depending on the cos_id value, launch an ipref exchange between this host and req_host reproducing closely the intendend class of service
     iperf_path='iperf' #for both container and code client
     
     if cos_id == 1:
-    #best_effort - download a web page of 3MB (maximum size of web page) under a limited bandwidth (e.g 100K bandwidth limit)
-        #cmd = ['/home/ubuntu/bin/iperf', '-c', req.host ,'-R', '-b', '100K', '-n', '3M', '-l', '12800']
-        run_iperf2_cmd([iperf_path, '-c' , ip_src, '-b', '100K', '-n', '3M', '-l', '12800','-i', '5'])
-
+        #best_effort - download a web page of 3MB (maximum size of web page) under a limited bandwidth (e.g 100K bandwidth limit)
+        cmd = str(iperf_path) +" -c " + ip_src + " -b 100K -n 3M -l 12800 -i 10"
+        stdout, stderr, code = run_iperf2_cmd(cmd)
 
     elif cos_id == 2:
-    #cpu-bound : Send an image (a person's face) of about 5MB, run the image recognition program (process of about 500 ms) and receive the result (about 500K data)
-    #cmd = ['/home/ubuntu/bin/iperf', '-c', req.host, '-u', '-n', '5M']
-        run_iperf2_cmd([iperf_path, '-c', ip_src,'-R', '-u', '-n', '1M','-i','5'])
+        #cpu-bound : Send an image (a person's face) of about 5MB, run the image recognition program (process of about 500 ms) and receive the result (about 500K data)
+        cmd = str(iperf_path) + " -c "+ ip_src +" -R -u -p 5002 -n 1M -i 10"
+        stdout, stderr, code = run_iperf2_cmd(cmd)
         sleep(random.randint(5,10)) #image processing lasts less than a few seconds
-        run_iperf2_cmd([iperf_path, '-c', ip_src, '-u', '-n', '500K','-i', '5'])
+        cmd = str(iperf_path) + " -c " + ip_src + "-u -p 5002 -n 500K -i  10"
+        stdout, stderr, code = run_iperf2_cmd(cmd)
 
     elif cos_id == 3:
         #streaming : downloading video file of 200m under a convenient bandwidth (10m, for example)
-        #cmd = ['/home/ubuntu/bin/iperf', '-c', req.host, '-R', '-u', '--isochronous=60:10m,1m', '-n', '200m', '-l', '1400']
-        run_iperf2_cmd([iperf_path, '-c', ip_src, '-u', '--isochronous=60:10m,1m', '-n', '200m', '-l', '1400','-i','5'])
+        cmd = str(iperf_path) + " -c " + ip_src + " -u -p 5002 --isochronous=60:10m,1m -n 200m -l 1400 -i 10"
+        stdout, stderr, code = run_iperf2_cmd(cmd)
 
     elif cos_id == 4:
-         #conversational (VoIP) send and receive voip data during a time period  (4 mn is the average call duration)
-         #each speaker talks for a period of 10 to 20 sec, between two consecutive speaking we apply a period of silence (0-2 sec)
-         end_time = datetime.now() + timedelta(minutes=4) #current time plus 4 minutes
-         while datetime.now() < end_time:
-             speech_time = np.random.uniform(10,20)
-             #cmd = ['/home/ubuntu/bin/iperf', '-c', req.host, '-u', '-S', '0xC0', '-l', '200', '-t', str(speech_time), '-b', '200k']
-             run_iperf2_cmd([iperf_path, '-c', ip_src, '-R', '-u', '-S', '0xC0', '-l', '200', '-t', str(speech_time), '-b', '200k','-i', '10'])
-             sleep(np.random.uniform(0,2)) #delay between two consecutive messages
-             speech_time = np.random.uniform(10,20)
-             #cmd = ['/home/ubuntu/bin/iperf', '-c', req.host, '-u','-R', '-S', '0xC0', '-l', '200', '-t', str(speech_time), '-b', '200k']
-             run_iperf2_cmd([iperf_path, '-c', ip_src, '-u', '-S', '0xC0', '-l', '200', '-t', str(speech_time), '-b', '200k', '-i','10'])
-             sleep(np.random.uniform(0,2))
+        #conversational (VoIP) send and receive voip data during a time period  (4 mn is the average call duration)
+        #each speaker talks for a period of 10 to 20 sec, between two consecutive speaking we apply a period of silence (0-2 sec)
+        end_time = datetime.now() + timedelta(minutes=4)
+        #current time plus 4 minutes
+        while datetime.now() < end_time:
+            speech_time = np.random.uniform(10,20)
+            cmd = str(iperf_path) + " -c " + ip_src + "-R  -u -p 5002 -S 0xC0 -l 200 -t " + str(speech_time) + " -b 200k -i 10"
+            stdout, stderr, code = run_iperf2_cmd(cmd)
+            sleep(np.random.uniform(0,2)) #delay between two consecutive messages
+            speech_time = np.random.uniform(10,20)
+            cmd = str(iperf_path) + " -c " + ip_src + " -u -p 5002 -S 0xC0 -l 200 -t " + str(speech_time) + " -b 200k -i 10"
+            stdout, stderr, code = run_iperf2_cmd(cmd)
+            sleep(np.random.uniform(0,2))
+    
     elif cos_id == 5:
-         #interactive Example IpTV/WebTV
-         #surfing time : 0 to 1mn, channel changing between 1 to 4 seconds
-         surf_time = np.random.uniform(10,60)
-         end_surf_time = datetime.now() + timedelta(seconds = surf_time)
-         while datetime.now() < end_surf_time:
-             change_time = np.random.uniform(1,4)
-             #Interactive-Video (AF41) – ToS value 0x88
-             #cmd = ['/home/ubuntu/bin/iperf','-u', '-c', req.host, '-R', '-S', '0x88', '-t', str(change_time)]
-             run_iperf2_cmd([iperf_path,'-u', '-c', ip_src, '-S', '0x88', '-t', str(change_time),'-i','10'])
-             #visualization time  : 1 mn to 1 hour (60,3600) but max of 5mn=300s for tests
-             visualization_time = np.random.uniform(60,300) 
-             #cmd = ['/home/ubuntu/bin/iperf', '-u', '-c', req.host, '-R', '-S', '0x88', '-t', str(visualization_time)]
-             run_iperf2_cmd([iperf_path, '-u', '-c', ip_src, '-S', '0x88', '-t', str(visualization_time),'-i','10'])
+        #interactive Example IpTV/WebTV
+        #surfing time : 0 to 1mn, channel changing between 1 to 4 seconds
+        surf_time = np.random.uniform(10,60)
+        end_surf_time = datetime.now() + timedelta(seconds = surf_time)
+        while datetime.now() < end_surf_time:
+            change_time = np.random.uniform(1,4)
+            #Interactive-Video (AF41) – ToS value 0x88
+            cmd = str(iperf_path) + " -u -p 5002 -c " + ip_src + " -S 0x88 -t " + str(change_time) + " -i 10"
+            stdout, stderr, code = run_iperf2_cmd(cmd)
+            #visualization time  : 1 mn to 1 hour (60,3600) but max of 5mn=300s for tests
+            visualization_time = np.random.uniform(60,300) 
+            cmd = str(iperf_path) + " -u -p 5002 -c " + ip_src + " -S 0x88 -t " + str(visualization_time) + " -i 10" 
+            stdout, stderr, code = run_iperf2_cmd(cmd)
 
     elif cos_id == 6:
-             # real-time - video game example : within a long period of time (average time of a game : 1 hour (5mnutes for tests) consequently exchange data (average 
-             # size 100MB=100000 MB) between the client and the server (a message each 10 s) , size of the message 100000/(3600s/10s) = 277 KB
-             end_time = datetime.now() + timedelta(minutes=5) #current time plus 1 hour (5mn for tests)
-             while datetime.now() < end_time :
-                 #cmd = ['/home/ubuntu/bin/iperf', '-c', req.host, '-u', '-n', '100K']
-                 run_iperf2_cmd([iperf_path, '-c', ip_src, '-R','-u', '-n', '100K','-i','10'])
-                 sleep(np.random.uniform(1,5))
-                 #cmd = ['/home/ubuntu/bin/iperf', '-c', req.host, '-R', '-u', '-n', '100K']
-                 run_iperf2_cmd([iperf_path, '-c', ip_src, '-u', '-n', '100K','-i','10'])
-                 sleep(np.random.uniform(5,10))
+            # real-time - video game example : within a long period of time (average time of a game : 1 hour (5mnutes for tests) consequently exchange data (average 
+            # size 100MB=100000 MB) between the client and the server (a message each 10 s) , size of the message 100000/(3600s/10s) = 277 KB
+            end_time = datetime.now() + timedelta(minutes=5) #current time plus 1 hour (5mn for tests)
+            while datetime.now() < end_time :
+                cmd = str(iperf_path) + " -c " + ip_src + " -R -u -p 5002 -n 100K -i 10"
+                stdout, stderr, code = run_iperf2_cmd(cmd)
+                sleep(np.random.uniform(1,5))
+                cmd = str(iperf_path) + " -c " + ip_src + " -u -p 5002 -n 100K -i 10"
+                stdout, stderr, code = run_iperf2_cmd(cmd)
+                sleep(np.random.uniform(5,10))
 
     elif cos_id == 7:
-                    # mission_critical example (e-health)  During a time period (30 seconds in this example) periodically sends short messages from client node
-                    # to server node, representing the patient’s vital signs.  Then randomly receive or not a recommendation from the server (we set the 
-                    # probability to receive recommendations to the value of 0.1, since a recommendation means applying changes or triggering some actions on 
-                    # the care protocol)
-                    t_end = time() + 60 * 10 #experience duration 10 mn
-                    while time() < t_end:
-                        send_recommendation = np.random.choice([True, False],10, p=[0.1, 0.9])  #10 probability the sent value triggers a recommendation send-back
-                        for i in range (10):
-                            #cmd = ['/home/ubuntu/bin/iperf', '-c', req.host, '-n', '2K']
-                            run_iperf2_cmd([iperf_path, '-c', ip_src, '-R','-n', '2K','-i','10'])
-                            if send_recommendation[i] :
-                                #cmd  = ['/home/ubuntu/bin/iperf', '-c', req.host, '-R', '-l', '500K']
-                                run_iperf2_cmd([iperf_path, '-c', ip_src, '-l', '500K','-i','10'])
-                        sleep(30)
+            # mission_critical example (e-health)  During a time period (30 seconds in this example) periodically sends short messages from client node
+            # to server node, representing the patient’s vital signs.  Then randomly receive or not a recommendation from the server (we set the 
+            # probability to receive recommendations to the value of 0.1, since a recommendation means applying changes or triggering some actions on 
+            # the care protocol)
+            t_end = time() + 60 * 10 #experience duration 10 mn
+            while time() < t_end:
+                send_recommendation = np.random.choice([True, False],10, p=[0.1, 0.9])  #10 probability the sent value triggers a recommendation send-back
+                for i in range (10):
+                    cmd = str(iperf_path) + " -c " + ip_src + " -R -n 2K -i 10"
+                    stdout, stderr, code = run_iperf2_cmd(cmd)
+                    if send_recommendation[i] :
+                        cmd  = str(iperf_path) + '-c', ip_src + " -l 500K -i 10"
+                        stdout, stderr, code = run_iperf2_cmd(cmd)
+                sleep(30)
     else:
         console.warning("cos_id not between 1 and 7")
 
     console.info('ending IPERF MESSAGES EXCHANGE')
-
-
     #sleep(uniform(SIM_EXEC_MIN, SIM_EXEC_MAX))
+    # test if iperf exchange succeed return result or return error
     return b'result'
