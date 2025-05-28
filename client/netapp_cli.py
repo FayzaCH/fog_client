@@ -43,7 +43,7 @@ def netapp_cli(mode: str, send_request, cos_names: dict):
             else:
                 #lauch TCP and UDP iperf2 server before sending data exchange request
                 iperf2_server_tcp = iperf2_server(port = 5001, udp = False, daemon = False)
-                iperf2_server_udp = iperf2_server(port = 5002,udp = True, damon = True)
+                iperf2_server_udp = iperf2_server(port = 5002,udp = True, daemon = True)
                 iperf2_server_tcp.launch()
                 iperf2_server_udp.launch()
 
