@@ -290,7 +290,7 @@ def run_iperf2_cmd(cmd:str):
             if err:
                 console.error(f"Stderr : {err.strip()}")
         else:
-            console.info(f" The command '{cmd} executed seccessfuly")
+            console.info(f" The command '{cmd} executed successfuly")
             if out:
                 console.info(f"Stdout : {out.strip()}")
             if err:
@@ -303,7 +303,7 @@ def run_iperf2_cmd(cmd:str):
         console.error(f"OSError during the execution of '{cmd}': '{e.strerror}' (code :'{e.errno}')")
         return None, None, -3
     except Exception as e:
-        console.error(f"An unexpected error occurred when executing the command '{ cmd }'.")
+        console.error(f"An unexpected error occurred when executing the command '{ cmd }' : '{e}.")
         return None, None, -4
     finally:
         if process:
@@ -340,12 +340,15 @@ def execute(data: bytes, ip_src, cos_id):
         cmd = str(iperf_path) + " -c "+ ip_src +" -R -u -p 5002 -n 1M -i 10"
         stdout, stderr, code = run_iperf2_cmd(cmd)
         sleep(random.randint(5,10)) #image processing lasts less than a few seconds
-        cmd = str(iperf_path) + " -c " + ip_src + "-u -p 5002 -n 500K -i  10"
+        cmd = str(iperf_path) + " -c " + ip_src + " -u -p 5002 -n 500K -i  10"
         stdout, stderr, code = run_iperf2_cmd(cmd)
 
     elif cos_id == 3:
-        #streaming : downloading video file of 200m under a convenient bandwidth (10m, for example)
-        cmd = str(iperf_path) + " -c " + ip_src + " -u -p 5002 --isochronous=60:10m,1m -n 200m -l 1400 -i 10"
+        #streaming : visualizing a video in streaming mode (size : 200m) under a convenient bandwidth (10m, for example)
+        # a time limit of 160 sec is set to stop the request in case of bad network conditions 
+        #cmd = str(iperf_path) + " -c " + ip_src + " -u -p 5002 --isochronous=60:10m,1m -n 200m -l 1400 -i 10"
+        cmd = str(iperf_path) + " -c " + ip_src + " -u -p 5002 --isochronous=30:10m,1m -t 160 -n 200m -i 5"
+
         stdout, stderr, code = run_iperf2_cmd(cmd)
 
     elif cos_id == 4:
@@ -355,7 +358,7 @@ def execute(data: bytes, ip_src, cos_id):
         #current time plus 4 minutes
         while datetime.now() < end_time:
             speech_time = np.random.uniform(10,20)
-            cmd = str(iperf_path) + " -c " + ip_src + "-R  -u -p 5002 -S 0xC0 -l 200 -t " + str(speech_time) + " -b 200k -i 10"
+            cmd = str(iperf_path) + " -c " + ip_src + " -R  -u -p 5002 -S 0xC0 -l 200 -t " + str(speech_time) + " -b 200k -i 10"
             stdout, stderr, code = run_iperf2_cmd(cmd)
             sleep(np.random.uniform(0,2)) #delay between two consecutive messages
             speech_time = np.random.uniform(10,20)
@@ -402,7 +405,7 @@ def execute(data: bytes, ip_src, cos_id):
                     cmd = str(iperf_path) + " -c " + ip_src + " -R -n 2K -i 10"
                     stdout, stderr, code = run_iperf2_cmd(cmd)
                     if send_recommendation[i] :
-                        cmd  = str(iperf_path) + '-c', ip_src + " -l 500K -i 10"
+                        cmd  = str(iperf_path) + " -c " + ip_src + " -l 500K -i 10"
                         stdout, stderr, code = run_iperf2_cmd(cmd)
                 sleep(30)
     else:
