@@ -405,9 +405,9 @@ def execute(data: bytes, ip_src, cos_id):
                     cmd = str(iperf_path) + " -c " + ip_src + " -R -n 2K -i 10"
                     stdout, stderr, code = run_iperf2_cmd(cmd)
                     if send_recommendation[i] :
-                        cmd  = str(iperf_path) + " -c " + ip_src + " -l 500K -i 10"
+                        cmd  = str(iperf_path) + " -c " + ip_src + " -n 500K -i 10"
                         stdout, stderr, code = run_iperf2_cmd(cmd)
-                sleep(30)
+                        sleep(30)
     else:
         console.warning("cos_id not between 1 and 7")
 
