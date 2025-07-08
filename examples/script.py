@@ -41,7 +41,8 @@ if MODE == MODE_RESOURCE:
     # INGRESS = getenv('INGRESS', 'None')
     # EGRESS = getenv('EGRESS', 'None')
 
-
+## sample of command to launch the automation script : send 10 parallel request (CoS 3)  from sta1_1 wit 5s delay between two requests
+## # MODE=client SERVER=30.0.3.226:8080 IPERF=client ID=00:00:00:00:10:11 LABEL=sta1_1 TOTAL=1 SEQUENTIAL=False INTERVAL=2 DELAY=5 THREADS=10 COS_ID=3 python script.py 
 print()
 if MODE == MODE_CLIENT:
     connect(MODE, SERVER, verbose=VERBOSE, id=ID, label=LABEL, iperf3=IPERF3)
