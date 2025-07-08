@@ -116,6 +116,7 @@ DATA = _data.encode()
 
 
 from client.protocol import send_request
+from client.iperf2 import iperf2_server, iperf2_kill
 
 
 def _send_request(index: int, cos_id: int, data: bytes):
@@ -126,17 +127,39 @@ def _send_requests():
     total = TOTAL
     index = 0
     sleep(DELAY)
+    launched_threads =[]
+
     while total != 0:
         total -= 1
         index += 1
         if SEQUENTIAL:
             _send_request(index, COS_ID, DATA)
         else:
-            Thread(target=_send_request, args=(
-                index, COS_ID, DATA)).start()
+            thread = Thread(target=_send_request, args=(
+                index, COS_ID, DATA))
+            launched_threads.append(thread)
+            thread.start()
         sleep(INTERVAL)
-    os._exit(1)    
+    
+    if not SEQUENTIAL:
+        for thread in launched_threads:
+            thread.join()    
 
+#lauch TCP and UDP iperf2 server before sending data exchange request
+iperf2_server_tcp = iperf2_server(port = 5001, udp = False, daemon = False)
+iperf2_server_udp = iperf2_server(port = 5002,udp = True, daemon = True)
+iperf2_server_tcp.launch()
+iperf2_server_udp.launch()
+
+main_threads = []
 
 for thread in range(THREADS):
-    Thread(target=_send_requests).start()
+    thread = Thread(target=_send_requests)
+    main_threads.append(thread)
+    thread.start()
+
+for thread in main_threads:
+    thread.join()
+
+iperf2_kill()
+os._exit()

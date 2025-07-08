@@ -1,7 +1,7 @@
 FROM fog_client:containernet
 
 ENV MODE=client
-ENV SERVER=127.0.0.1:8080
+ENV SERVER=30.0.3.226:8080
 ENV CPU=0
 ENV RAM=0
 ENV DISK=0
