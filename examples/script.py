@@ -163,4 +163,4 @@ for thread in main_threads:
     thread.join()
 
 iperf2_kill()
-os._exit()
+os._exit(1)
