@@ -201,7 +201,7 @@ class Monitor(metaclass=SingletonMeta):
                 #    if cpu != '\n':
                 #        cpu_usage += ((float(percpu_2[i]) - float(cpu)) /
                 #                      (self._cpu_period / NANO))
-                cpu_utilization = (float(new_cpu_usage) - float(cpu_usage)) / (self._cpu_period / NANO )
+                cpu_utilization = (float(new_cpu_usage[0]) - float(cpu_usage)) / (self._cpu_period / NANO )
                 
                 #self.measures['cpu_free'] = max(
                 #    0.0, float(self.measures['cpu_count'] - cpu_usage))
