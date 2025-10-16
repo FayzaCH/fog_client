@@ -114,7 +114,7 @@ class Monitor(metaclass=SingletonMeta):
         # by setting pernic to True
         io = net_io_counters(pernic=True)
         #percpu = self._const_host()
-        cpu_usage=self._const_host()
+        cpu_usage = self._const_host()
         while self._run:
             #percpu2 = self._var_host(percpu)
             cpu_usage2 = self._var_host(cpu_usage)
@@ -138,16 +138,17 @@ class Monitor(metaclass=SingletonMeta):
         if IS_CONTAINER:
             # get usage of each CPU (in nanoseconds)
             try:
-                quotacpu = open(
-                    CGROUP_PATH + '/cpu/cpu.cfs_quota_us').read()
+                quotacpu = int(open(
+                    CGROUP_PATH + '/cpu/cpu.cfs_quota_us').read().strip())
                 #cpus = len(percpu) - 1  # don't count '\n'
 
-                periodcpu = open(
-                    CGROUP_PATH + '/cpu/cpu.cfs_period_us').read()
-                cpu_usage = open(
-                    CGROUP_PATH + '/cpu/cpuacct.usage').read().split(' ')
+                periodcpu = int(open(
+                    CGROUP_PATH + '/cpu/cpu.cfs_period_us').read().strip())
+                cpu_usage = int(open(
+                    CGROUP_PATH + '/cpu/cpuacct.usage').read().strip())
 
-                cpus =  float(quotacpu) / float(periodcpu)
+                cpus =  quotacpu/periodcpu
+
             except Exception as e:
                 cpus = cpu_count()
                 console.error('Unable to read Docker control group for CPU '
@@ -184,28 +185,39 @@ class Monitor(metaclass=SingletonMeta):
         # get host specs that are variable
         # (CPU free, RAM free, disk free)
 
-        percpu_2 = None
+        #percpu_2 = None
         new_cpu_usage = 0
-        cpu_usage = 0
+        #cpu_usage = 0
         if IS_CONTAINER:
-            sleep(self._cpu_period)
+            #sleep(self._cpu_period)
             # get CPU usage again after sleep
             try:
+                sleep(self._cpu_period)
                 #percpu_2 = open(
                 #    CGROUP_PATH + '/cpu/cpuacct.usage_percpu').read().split(' ')
-                new_cpu_usage = open(
-                    CGROUP_PATH + '/cpu/cpuacct.usage').read().split(' ')
-                cpu_utilization =  0
+                new_cpu_usage = int(open(
+                    CGROUP_PATH + '/cpu/cpuacct.usage').read().strip())
+                cpu_delta = new_cpu_usage - cpu_usage
+                total_available_cpu_time = (self._cpu_period * 1_000_000_000) - self.measures['cpu_count']
+
+                if total_available_cpu_time <= 0 :
+                    usage_percent = (cpu_delta / total_available_cpu_time) * 100
+                else :
+                    usage_percent = 0.0
+
+                #cpu_utilization =  0
                 #cpu_usage = 0
                 #for i, cpu in enumerate(percpu):
                 #    if cpu != '\n':
                 #        cpu_usage += ((float(percpu_2[i]) - float(cpu)) /
                 #                      (self._cpu_period / NANO))
-                cpu_utilization = (float(new_cpu_usage) - float(cpu_usage)) / (self._cpu_period / NANO )
-                
+                #cpu_utilization = (float(new_cpu_usage) - float(cpu_usage)) / (self._cpu_period / NANO )
+                used_cores = self.measures['cpu_count'] * (usage_percent / 100.0)
+                free_cores = max(0.0, self.measures['cpu_count'] - used_cores)
+                self.measures['cpu_free'] = free_cores
                 #self.measures['cpu_free'] = max(
                 #    0.0, float(self.measures['cpu_count'] - cpu_usage))
-                self.measures['cpu_free'] = float(self.measures['cpu_count'] - cpu_utilization)
+                #self.measures['cpu_free'] = float(self.measures['cpu_count'] - cpu_utilization)
             except:
                 file.exception('')
                 self.measures['cpu_free'] = max(
