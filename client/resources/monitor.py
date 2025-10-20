@@ -113,13 +113,10 @@ class Monitor(metaclass=SingletonMeta):
         # get network I/O stats on each interface
         # by setting pernic to True
         io = net_io_counters(pernic=True)
-        #percpu = self._const_host()
         cpu_usage = self._const_host()
         while self._run:
-            #percpu2 = self._var_host(percpu)
             cpu_usage2 = self._var_host(cpu_usage)
             # update network I/O stats for next iteration
-            #percpu = percpu2
             cpu_usage = cpu_usage2
             sleep(self.monitor_period - self._cpu_period)
             io2 = self._var_net(io)
@@ -130,11 +127,9 @@ class Monitor(metaclass=SingletonMeta):
         # get host specs that are constant
         # (CPU count, RAM total, disk total)
 
-        #percpu = None
         cpu_usage = 0
         cpus = 0
         psutil_mem_total = virtual_memory().total
-        #console.info('psutil_mem_total == %s ', psutil_mem_total)
         if IS_CONTAINER:
             # get usage of each CPU (in nanoseconds)
             try:
@@ -155,7 +150,6 @@ class Monitor(metaclass=SingletonMeta):
                               '(%s). Switching to psutil',
                               e.__class__.__name__)
                 file.exception('Unable to read Docker control group for CPU')
-            #self.measures['cpu_count'] = int(cpus)
             self.measures['cpu_count'] = cpus
 
             try:
@@ -173,51 +167,44 @@ class Monitor(metaclass=SingletonMeta):
             self.measures['memory_total'] = float(memory_total / MEBI)
         else:
             cpus = cpu_count()
-            #self.measures['cpu_count'] = int(cpus)
             self.measures['cpu_count'] = float(cpus)
             self.measures['memory_total'] = float(psutil_mem_total / MEBI)
         self.measures['disk_total'] = float(disk_usage(ROOT_PATH).total / GIBI)
-        #return percpu
         return cpu_usage
 
-    #def _var_host(self, percpu):
     def _var_host(self, cpu_usage):
         # get host specs that are variable
         # (CPU free, RAM free, disk free)
 
-        #percpu_2 = None
         new_cpu_usage = 0
-        #cpu_usage = 0
+        
         if IS_CONTAINER:
             #sleep(self._cpu_period)
             # get CPU usage again after sleep
             try:
                 sleep(self._cpu_period)
-                #percpu_2 = open(
-                #    CGROUP_PATH + '/cpu/cpuacct.usage_percpu').read().split(' ')
+
                 new_cpu_usage = int(open(
                     CGROUP_PATH + '/cpu/cpuacct.usage').read().strip())
                 cpu_delta = new_cpu_usage - cpu_usage
-                total_available_cpu_time = (self._cpu_period * 1_000_000_000) - self.measures['cpu_count']
+                if cpu_delta < 0 :
+                    cpu_delta = 0
+                
+                # Total available CPU time over the period, in nanoseconds
+                total_available_cpu_time = (self._cpu_period * 1_000_000_000) * self.measures['cpu_count']
 
-                if total_available_cpu_time <= 0 :
+                if total_available_cpu_time > 0 :
+                    # Utilization is (used time / total available time)
                     usage_percent = (cpu_delta / total_available_cpu_time) * 100
                 else :
                     usage_percent = 0.0
 
-                #cpu_utilization =  0
-                #cpu_usage = 0
-                #for i, cpu in enumerate(percpu):
-                #    if cpu != '\n':
-                #        cpu_usage += ((float(percpu_2[i]) - float(cpu)) /
-                #                      (self._cpu_period / NANO))
-                #cpu_utilization = (float(new_cpu_usage) - float(cpu_usage)) / (self._cpu_period / NANO )
+                # Number of cores currently used (e.g., 1.5 cores used out of 2.0 total)
                 used_cores = self.measures['cpu_count'] * (usage_percent / 100.0)
+                # Number of cores currently free
                 free_cores = max(0.0, self.measures['cpu_count'] - used_cores)
+                
                 self.measures['cpu_free'] = free_cores
-                #self.measures['cpu_free'] = max(
-                #    0.0, float(self.measures['cpu_count'] - cpu_usage))
-                #self.measures['cpu_free'] = float(self.measures['cpu_count'] - cpu_utilization)
             except:
                 file.exception('')
                 self.measures['cpu_free'] = max(
