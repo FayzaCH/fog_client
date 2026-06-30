@@ -327,33 +327,47 @@ def execute(data: bytes, ip_src, cos_id):
     #console.info('in execute Min = %s  Max = %s', str(SIM_EXEC_MIN), str(SIM_EXEC_MAX))
     #sleep(uniform(SIM_EXEC_MIN, SIM_EXEC_MAX))
     console.info('starting IPERF MESSAGE EXCHANGE ')
-    ## depending on the cos_id value, launch an ipref exchange between this host and req_host reproducing closely the intendend class of service
+    ## depending on the cos_id value, launch an ipref exchange between this host and req_host reproducing 
+    # closely the intendend class of service
     iperf_path='iperf' #for both container and code client
     
     if cos_id == 1:
-        #best_effort - download a web page of 3MB (maximum size of web page) under a limited bandwidth (e.g 100K bandwidth limit)
-        cmd = str(iperf_path) +" -c " + ip_src + " -b 100K -n 3M -l 12800 -i 10"
-        stdout, stderr, code = run_iperf2_cmd(cmd)
+        #best_effort - web browsing session
+        console.info('STARTING : Web browsing  - Best-effort CoS') 
+        for page in range(5):
+            #Link click (main page e.g., 150KB)
+            cmd = str(iperf_path) +" -c " + ip_src + " -n 150K -i 10"
+            stdout, stderr, code = run_iperf2_cmd(cmd)
+            #Browser opens parallel TCP connections to download the images/assets (e.g., 3 streams of 300K)
+            cmd = str(iperf_path) + " -c " + ip_src + " -n 300K -P 3 -i 10"
+            stdout, stderr, code = run_iperf2_cmd(cmd)
+            #Random pause of 5 to 15 seconds before next click
+            sleep(random.randint(5,15))
+        console.info('ENDING : Web browsing  - Best-effort CoS') 
 
     elif cos_id == 2:
-        #cpu-bound : Send an image (a person's face) of about 5MB, run the image recognition program (process of about 500 ms) and receive the result (about 500K data)
+        #cpu-bound : Send an image (a person's face) of about 5MB, run the image recognition 
+        # program (process of about 500 ms) and receive the result (about 500K data)
+        console.info('STARTING : Face recognition - CPU-Bound CoS')        
         cmd = str(iperf_path) + " -c "+ ip_src +" -R -u -p 5002 -n 1M -i 10"
         stdout, stderr, code = run_iperf2_cmd(cmd)
         sleep(random.randint(5,10)) #image processing lasts less than a few seconds
         cmd = str(iperf_path) + " -c " + ip_src + " -u -p 5002 -n 500K -i  10"
         stdout, stderr, code = run_iperf2_cmd(cmd)
+        console.info('ENDING : Face recognition - CPU-Bound CoS')
 
     elif cos_id == 3:
-        #streaming : visualizing a video in streaming mode (size : 200m) under a convenient bandwidth (10m, for example)
-        # a time limit of 160 sec is set to stop the request in case of bad network conditions 
-        #cmd = str(iperf_path) + " -c " + ip_src + " -u -p 5002 --isochronous=60:10m,1m -n 200m -l 1400 -i 10"
-        cmd = str(iperf_path) + " -c " + ip_src + " -u -p 5002 --isochronous=30:10m,1m -t 160 -n 200m -i 5"
-
+        console.info('STARTING : Video streaming - Streaming CoS')
+        #streaming : visualizing a video in streaming mode (size : 200M)
+        #for a 108p HD stream (approx. 4 Mbps at 30 fps)
+        cmd = str(iperf_path) + " -c " + ip_src + " -u -p 5002 --isochronous=30:5m,1m -n 200M -l 1400 -i 10"
         stdout, stderr, code = run_iperf2_cmd(cmd)
+        console.info('ENDING : Video streaming - Streaming CoS')
 
     elif cos_id == 4:
         #conversational (VoIP) send and receive voip data during a time period  (4 mn is the average call duration)
         #each speaker talks for a period of 10 to 20 sec, between two consecutive speaking we apply a period of silence (0-2 sec)
+        console.info('STARTING : VoIP - Conversational CoS')
         end_time = datetime.now() + timedelta(minutes=4)
         #current time plus 4 minutes
         while datetime.now() < end_time:
@@ -365,49 +379,67 @@ def execute(data: bytes, ip_src, cos_id):
             cmd = str(iperf_path) + " -c " + ip_src + " -u -p 5002 -S 0xC0 -l 200 -t " + str(speech_time) + " -b 200k -i 10"
             stdout, stderr, code = run_iperf2_cmd(cmd)
             sleep(np.random.uniform(0,2))
+        console.info('Ending : VoIP - Conversational CoS')
     
     elif cos_id == 5:
+        console.info('STARTING : IpTV/WebTV - Interactive CoS')
         #interactive Example IpTV/WebTV
-        #surfing time : 0 to 1mn, channel changing between 1 to 4 seconds
-        surf_time = np.random.uniform(10,60)
-        end_surf_time = datetime.now() + timedelta(seconds = surf_time)
+        #---Phase 1 : SURFING MODE (zapping phase) ---
+        # Total time spent surfing before picking a program (e.g., between 10 to 60 seconds)
+        total_surf_duration = np.random.uniform(10,60)
+        end_surf_time = datetime.now() + timedelta(seconds = total_surf_duration)
         while datetime.now() < end_surf_time:
-            change_time = np.random.uniform(1,4)
-            #Interactive-Video (AF41) – ToS value 0x88
-            cmd = str(iperf_path) + " -u -p 5002 -c " + ip_src + " -S 0x88 -t " + str(change_time) + " -i 10"
+            #time spent on channel before zapping again (1 to 4 seconds)
+            zap_holding_time = np.random.uniform(1,4)
+            #Simulate the brief traffic blast of tunning into channel while surfing
+            # Interactive-Video (AF41) – ToS value 0x88
+            cmd = str(iperf_path) + " -u -p 5002 -c " + ip_src + " -S 0x88 -t " + str(zap_holding_time ) + " -i 10"
             stdout, stderr, code = run_iperf2_cmd(cmd)
-            #visualization time  : 1 mn to 1 hour (60,3600) but max of 5mn=300s for tests
-            visualization_time = np.random.uniform(60,300) 
+
+            #---Phase 2 : VISUALIZATION MODE (stead viewing ) ---
+            #---Using a log-normal distribution tightly reflects the heavy-tailed times in time in chaa et al.
+            #1 minute to 1 hour
+            #visualization_time = np.random.uniform(60,3600)
+            visualization_time = np.random.uniform(60,300) #for test purposes, we limit the visualization time to 5 minutes  
             cmd = str(iperf_path) + " -u -p 5002 -c " + ip_src + " -S 0x88 -t " + str(visualization_time) + " -i 10" 
             stdout, stderr, code = run_iperf2_cmd(cmd)
+        console.info('Ending : IpTV/WebTV - Interactive CoS')
+
 
     elif cos_id == 6:
-            # real-time - video game example : within a long period of time (average time of a game : 1 hour (5mnutes for tests) consequently exchange data (average 
-            # size 100MB=100000 MB) between the client and the server (a message each 10 s) , size of the message 100000/(3600s/10s) = 277 KB
-            end_time = datetime.now() + timedelta(minutes=5) #current time plus 1 hour (5mn for tests)
-            while datetime.now() < end_time :
-                cmd = str(iperf_path) + " -c " + ip_src + " -R -u -p 5002 -n 100K -i 10"
-                stdout, stderr, code = run_iperf2_cmd(cmd)
-                sleep(np.random.uniform(1,5))
-                cmd = str(iperf_path) + " -c " + ip_src + " -u -p 5002 -n 100K -i 10"
-                stdout, stderr, code = run_iperf2_cmd(cmd)
-                sleep(np.random.uniform(5,10))
+        # Online Gaming - (Interactive) - Optimized based on Moon, D.( 2024). Network trafic
+        # Characteristics and Analysis in Recent Mobiles Games. 
+        console.info('STARTING : Online gaming - Real-time CoS')
+        # 1-hour continuous TCP session, simulating Game A (MMORPG),
+        # BW = ~100Mo/h, packet size = ~100 octett max, bidirectional simultaneous flow (client <-> server) for the specified duration.
+        game_duration_seconds = 3600
+        cmd = str(iperf_path) + " -c " + ip_src + " -b 220K -l 100 -t " + str(game_duration_seconds) + " -d -i 10"
+        stdout, stderr, code = run_iperf2_cmd(cmd)
+        console.info('ENDING : Online gaming - Real-time CoS')
 
     elif cos_id == 7:
-            # mission_critical example (e-health)  During a time period (30 seconds in this example) periodically sends short messages from client node
-            # to server node, representing the patient’s vital signs.  Then randomly receive or not a recommendation from the server (we set the 
-            # probability to receive recommendations to the value of 0.1, since a recommendation means applying changes or triggering some actions on 
-            # the care protocol)
-            t_end = time() + 60 * 10 #experience duration 10 mn
-            while time() < t_end:
-                send_recommendation = np.random.choice([True, False],10, p=[0.1, 0.9])  #10 probability the sent value triggers a recommendation send-back
-                for i in range (10):
-                    cmd = str(iperf_path) + " -c " + ip_src + " -R -n 2K -i 10"
+        # mission_critical (e-health) (Context-aware sensing - Dutt & Rahmani 2020)
+        # Total execution 10 minutes 
+        # to server node, representing the patient’s vital signs.  Then randomly receive or not a recommendation from the server (we set the 
+        # probability to receive recommendations to the value of 0.1, since a recommendation means applying changes or triggering some actions on 
+        # the care protocol)
+        console.info('STARTING : E-health - Mission critical CoS')
+        t_end = time() + 60 * 10 
+        while time() < t_end:
+            #Generate 10 bolean decisions to send back or not a recommendation to the server (probability of sending a recommendation is 0.1) 
+            send_recommendation = np.random.choice([True, False],10, p=[0.1, 0.9])  
+            for i in range (10):
+                # 1- vital signs streams (Wearable -> edge gateway) 2K for a standard PPG/ECG data. 
+                cmd = str(iperf_path) + " -c " + ip_src + " -R -u -p 5002 -n 2K -S 0xB8 -i 10"
+                stdout, stderr, code = run_iperf2_cmd(cmd)
+                # 2- Context-aware adaptation commands (Edge gateway -> Wearable) 
+                # 4KB for a standard command (e.g., change the sampling frequency).
+                if send_recommendation[i] :
+                    cmd  = str(iperf_path) + " -c " + ip_src + " -u -p 5002 -n 4K -S 0xB8 -i 10"
                     stdout, stderr, code = run_iperf2_cmd(cmd)
-                    if send_recommendation[i] :
-                        cmd  = str(iperf_path) + " -c " + ip_src + " -n 500K -i 10"
-                        stdout, stderr, code = run_iperf2_cmd(cmd)
-                        sleep(30)
+                # wait for 30 seconds between two consectif vital sign reporting
+                sleep(30)
+        console.info('ENDING : E-helth - Mission critical CoS')        
     else:
         console.warning("cos_id not between 1 and 7")
 
