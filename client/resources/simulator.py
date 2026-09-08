@@ -333,7 +333,7 @@ def execute(data: bytes, ip_src, cos_id):
     
     if cos_id == 1:
         #best_effort - web browsing session
-        console.info('STARTING : Web browsing - Best-effort CoS')
+        console.info('STARTING : Web browsing - Best-effort CoS 1')
         for page in range(5):
             cmd = str(iperf_path) +" -c " + ip_src + " -n 150K -i 10"
             stdout, stderr, code = run_iperf2_cmd(cmd)
@@ -342,31 +342,31 @@ def execute(data: bytes, ip_src, cos_id):
             stdout, stderr, code = run_iperf2_cmd(cmd)
             #Ramdom pause of 5 to 15 seconds before next click
             sleep(random.randint(5,15))
-        console.info('ENDING : Web browsing - Best-effort CoS')
+        console.info('ENDING : Web browsing - Best-effort CoS 1')
 
     elif cos_id == 2:
         #cpu-bound : Send an image (a person's face) of about 5MB, run the image recognition program 
         #(process of about 500 ms) and receive the result (about 500K data)
-        console.info('STARTING : Face recognition - CPU-bound CoS')
+        console.info('STARTING : Face recognition - CPU-bound CoS 2')
         cmd = str(iperf_path) + " -c "+ ip_src +" -R -u -p 5002 -n 1M -i 10"
         stdout, stderr, code = run_iperf2_cmd(cmd)
         sleep(random.randint(5,10)) #image processing lasts less than a few seconds
         cmd = str(iperf_path) + " -c " + ip_src + " -u -p 5002 -n 500K -i  10"
         stdout, stderr, code = run_iperf2_cmd(cmd)
-        console.info('ENDING : Face recognition - CPU-bound CoS')
+        console.info('ENDING : Face recognition - CPU-bound CoS 2')
       
     elif cos_id == 3:
         #streaming : visualizing a video in streaming mode (size : 200M) 
         # for a 180p HD stream (approx. 4 Mbps at 30 fps)
-        console.info('STARTING : Video streaming - Streaming CoS')
+        console.info('STARTING : Video streaming - Streaming CoS 3')
         cmd = str(iperf_path) + " -c " + ip_src + " -u -p 5002 --isochronous=30:5m,1m -n 200M -l 1400 -i 10"
         stdout, stderr, code = run_iperf2_cmd(cmd)
-        console.info('ENDING : Video streaming - Streaming CoS')
+        console.info('ENDING : Video streaming - Streaming CoS 3')
 
     elif cos_id == 4:
         #conversational (VoIP) send and receive voip data during a time period  (4 mn is the average call duration)
         #each speaker talks for a period of 10 to 20 sec, between two consecutive speaking we apply a period of silence (0-2 sec)
-        console.info('STARTING : VoIP - Conversational CoS')
+        console.info('STARTING : VoIP - Conversational CoS 4')
         end_time = datetime.now() + timedelta(minutes=4)
         #current time plus 4 minutes
         while datetime.now() < end_time:
@@ -378,11 +378,11 @@ def execute(data: bytes, ip_src, cos_id):
             cmd = str(iperf_path) + " -c " + ip_src + " -u -p 5002 -S 0xC0 -l 200 -t " + str(speech_time) + " -b 200k -i 10"
             stdout, stderr, code = run_iperf2_cmd(cmd)
             sleep(np.random.uniform(0,2))
-        console.info('ENDING : VoIP - Conversational CoS')
+        console.info('ENDING : VoIP - Conversational CoS 4')
 
     elif cos_id == 5:
         #interactive Example IpTV/WebTV
-        console.info('STARTING : IpTV/WebTV - Interactive CoS')
+        console.info('STARTING : IpTV/WebTV - Interactive CoS 5')
         #---Pase 1 : SURFING MODE (zapping phase) ---
         # Total time spent surfing before picking a program (e.g. between 10 to 60 seconds)
         total_surf_duration = np.random.uniform(10,60)
@@ -403,19 +403,19 @@ def execute(data: bytes, ip_src, cos_id):
             visualization_time = np.random.uniform(60,300) 
             cmd = str(iperf_path) + " -u -p 5002 -c " + ip_src + " -S 0x88 -t " + str(visualization_time) + " -i 10" 
             stdout, stderr, code = run_iperf2_cmd(cmd)
-        console.info('ENDING : IpTV/WebTV - Interactive CoS')    
+        console.info('ENDING : IpTV/WebTV - Interactive CoS 5')    
 
     elif cos_id == 6:
             # Online Gaming - (Interactive) - Optimized based on Moon, D. (2024).
             # Network traffic Characteristics and Analysis in Recent Mobile Games. 
-            console.info('STARTING : Online Gaming - Real-time CoS')
+            console.info('STARTING : Online Gaming - Real-time CoS 6')
             # 1 hour continuous TCP session, simulating Game A (MMORPG),
             # BW = ~100Mo/h, packet size = ~100 octet max, bidirectional simultaneous
             # flow (client<-> server) for the specified duration.
             game_duration_seconds = 3600
             cmd = str(iperf_path) + " -c " + ip_src + " -b 220K -l 100 -t " + str(game_duration_seconds) + " -d -i 10"
             stdout, stderr, code = run_iperf2_cmd(cmd)
-            console.info('ENDING : Online gaming - Real-time CoS')
+            console.info('ENDING : Online gaming - Real-time CoS 6')
 
     elif cos_id == 7:
             # mission_critical example (e-health) (Context-aware sensing - Dutt & Rahmani 2020)
@@ -424,7 +424,7 @@ def execute(data: bytes, ip_src, cos_id):
             # to server node, representing the patient’s vital signs.  Then randomly receive or not a recommendation (we set the 
             # probability to receive recommendations to 0.1. A recommendation means applying changes or triggering some actions on 
             # the care protocol)
-            console.info('STARTING : E-health - Mission critical CoS')
+            console.info('STARTING : E-health - Mission critical CoS 7')
             t_end = time() + 60 * 10 #experience duration 10 mn
             while time() < t_end:
                 #Generate 10 random boolean decisions to send back or not a recommendation
@@ -440,7 +440,7 @@ def execute(data: bytes, ip_src, cos_id):
                         stdout, stderr, code = run_iperf2_cmd(cmd)
                         #wait for 30 seconds between two consecutive vital sign reporting
                         sleep(30)
-            console.info('ENDING : E-health - Mission critical CoS')
+            console.info('ENDING : E-health - Mission critical CoS 7')
     else:
         console.warning("cos_id not between 1 and 7")
 
