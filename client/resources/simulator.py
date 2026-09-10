@@ -412,7 +412,7 @@ def execute(data: bytes, ip_src, cos_id):
             # 1 hour continuous TCP session, simulating Game A (MMORPG),
             # BW = ~100Mo/h, packet size = ~100 octet max, bidirectional simultaneous
             # flow (client<-> server) for the specified duration.
-            game_duration_seconds = 3600
+            game_duration_seconds = 600 # 10 mn pour les tests au lieu de 3600
             cmd = str(iperf_path) + " -c " + ip_src + " -b 220K -l 100 -t " + str(game_duration_seconds) + " -d -i 10"
             stdout, stderr, code = run_iperf2_cmd(cmd)
             console.info('ENDING : Online gaming - Real-time CoS 6')
