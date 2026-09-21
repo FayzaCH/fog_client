@@ -3,6 +3,7 @@ import os
 import signal
 import re
 from logger import console, file
+import time
 '''
 classe iperf2_server(port_number, Daemon_Mode, UDP_protocol)
 port_number : default "5001"
@@ -28,6 +29,16 @@ class iperf2_server:
             return False, False
         except subprocess.CalledProcessError:
             return False, False
+
+    def _wait_until_listening(self, timeout=3.0):
+        deadline = time.time() + timeout
+        while time.time() < deadline:
+            if self._is_iperf_running()[0]:
+                return True
+            time.sleep(0.1)
+        console.warning('Iperf server not listening on port %s after %.1fs',
+                        self.port, timeout)
+        return False
  
     def launch(self):
         iperf2_tcp, iperf2_udp = self._is_iperf_running()
@@ -59,6 +70,7 @@ class iperf2_server:
                 self.iperf_pid = process.pid
             mode = "UDP" if self.udp else "TCP"
             console.info('Iperf %s server launched on port %s with pid %s', mode, self.port, self.iperf_pid) 
+            self._wait_until_listening()
 
         except FileNotFoundError:
             console.error(f"Error Iperf command not found")

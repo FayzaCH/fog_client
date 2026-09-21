@@ -34,7 +34,9 @@
 from os import getenv
 from threading import Lock
 from random import uniform
-from time import sleep, time
+from time import sleep, time, monotonic
+
+import re
 
 from .monitor import Monitor
 from common import THRESHOLD, LIMIT, IS_RESOURCE
@@ -277,7 +279,7 @@ def free_resources(req: Request):
         get_resources()
         return True
     
-def run_iperf2_cmd(cmd:str):
+def _run_iperf2_cmd_once(cmd:str):
     #print('cmd = %s',cmd)
     process = None
     try:
@@ -314,7 +316,39 @@ def run_iperf2_cmd(cmd:str):
             if process.poll() is None:
                 #force iperf process to terminate
                 process.kill()
-                process.wait()        
+                process.wait()      
+
+UDP_GAP = 1.2       #minimum seconds between two UDP session to the same server
+_udp_lock = Lock()
+_last_udp_end = {}  # (ip, port( -> monotic ))  of the end of the last session  
+
+def _udp_key(cmd: str):
+    """Return (ip,port if the command is a Client UDP test, None otherwise.)"""
+    if not re.search(r'\s-u(\s|$)', cmd):
+        return None
+    ip = re.search(r'-c\s+(\S+)', cmd)
+    port = re.search(r'-p\s+(\d+)', cmd)
+    return (ip.group(1) if ip else None, port.group(1) if port else '5001')
+
+
+def run_iperf2_cmd(cmd: str, retries: int = 3):
+    key = _udp_key(cmd)
+    out = err = Nonecode = -5
+    for attempt in range(1, retries + 1):
+        if key:
+            with _udp_lock:
+                wait = _last_udp_end.get(key, 0) + UDP_GAP - monotonic()
+            if wait > 0:
+                sleep(wait)
+        out, err, code = _run_iperf2_cmd_once(cmd)
+        if key:
+            with _udp_lock:
+                _last_udp_end[key] = monotonic()
+        refused = 'connection refused' in ((out or '') + (err or '')).lower()
+        if code == 0 and not refused:
+            return out, err, code
+        console.warning(f"iperf2 attempt {attempt}/{retries} failed for '{cmd}'")
+    return out, err, -5  # final fail                    
     
 def execute(data: bytes, ip_src, cos_id):
     '''

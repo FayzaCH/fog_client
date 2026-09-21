@@ -19,4 +19,6 @@ RUN pip install -r requirements.txt
 ENV IS_CONTAINER=yes
 
 EXPOSE 5001/tcp 5001/udp
+EXPOSE 5002/udp
+
 #CMD /bin/iperf -s -D && /bin/iperf -s -u -D
