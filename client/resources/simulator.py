@@ -438,8 +438,8 @@ def execute(data: bytes, ip_src, cos_id):
                     if send_recommendation[i] :
                         cmd  = str(iperf_path) + " -c " + ip_src + " -u -p 5002 -n 4K -S 0xB8 -i 10"
                         stdout, stderr, code = run_iperf2_cmd(cmd)
-                        #wait for 30 seconds between two consecutive vital sign reporting
-                        sleep(30)
+                    #wait for 30 seconds between two consecutive vital sign reporting
+                    sleep(30)
             console.info('ENDING : E-health - Mission critical CoS 7')
     else:
         console.warning("cos_id not between 1 and 7")
