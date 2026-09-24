@@ -364,16 +364,22 @@ def execute(data: bytes, ip_src, cos_id):
     ## depending on the cos_id value, launch an ipref exchange between
     # this host and req_host reproducing closely the intendend class of service
     iperf_path='iperf' #for both container and code client
+    errors = []
+    def _run(cmd):
+        stdout, stderr, code = _run(cmd)
+        if code !=0:
+            errors.append(cmd)
+        return stdout, stderr, code
     
     if cos_id == 1:
         #best_effort - web browsing session
         console.info('STARTING : Web browsing - Best-effort CoS 1')
         for page in range(5):
             cmd = str(iperf_path) +" -c " + ip_src + " -n 150K -i 10"
-            stdout, stderr, code = run_iperf2_cmd(cmd)
+            stdout, stderr, code = _run(cmd)
             # Browser open parallel TCP connections to download images/assets (e.g. 3 streams of 300K)
             cmd = str(iperf_path) + " -c " + ip_src + " -n 300K -P 3 -i 10"   
-            stdout, stderr, code = run_iperf2_cmd(cmd)
+            stdout, stderr, code = _run(cmd)
             #Ramdom pause of 5 to 15 seconds before next click
             sleep(random.randint(5,15))
         console.info('ENDING : Web browsing - Best-effort CoS 1')
@@ -383,10 +389,10 @@ def execute(data: bytes, ip_src, cos_id):
         #(process of about 500 ms) and receive the result (about 500K data)
         console.info('STARTING : Face recognition - CPU-bound CoS 2')
         cmd = str(iperf_path) + " -c "+ ip_src +" -R -u -p 5002 -n 1M -i 10"
-        stdout, stderr, code = run_iperf2_cmd(cmd)
+        stdout, stderr, code = _run(cmd)
         sleep(random.randint(5,10)) #image processing lasts less than a few seconds
         cmd = str(iperf_path) + " -c " + ip_src + " -u -p 5002 -n 500K -i  10"
-        stdout, stderr, code = run_iperf2_cmd(cmd)
+        stdout, stderr, code = _run(cmd)
         console.info('ENDING : Face recognition - CPU-bound CoS 2')
       
     elif cos_id == 3:
@@ -394,7 +400,7 @@ def execute(data: bytes, ip_src, cos_id):
         # for a 180p HD stream (approx. 4 Mbps at 30 fps)
         console.info('STARTING : Video streaming - Streaming CoS 3')
         cmd = str(iperf_path) + " -c " + ip_src + " -u -p 5002 --isochronous=30:5m,1m -n 200M -l 1400 -i 10"
-        stdout, stderr, code = run_iperf2_cmd(cmd)
+        stdout, stderr, code = _run(cmd)
         console.info('ENDING : Video streaming - Streaming CoS 3')
 
     elif cos_id == 4:
@@ -406,11 +412,11 @@ def execute(data: bytes, ip_src, cos_id):
         while datetime.now() < end_time:
             speech_time = np.random.uniform(10,20)
             cmd = str(iperf_path) + " -c " + ip_src + " -R  -u -p 5002 -S 0xC0 -l 200 -t " + str(speech_time) + " -b 200k -i 10"
-            stdout, stderr, code = run_iperf2_cmd(cmd)
+            stdout, stderr, code = _run(cmd)
             sleep(np.random.uniform(0,2)) #delay between two consecutive messages
             speech_time = np.random.uniform(10,20)
             cmd = str(iperf_path) + " -c " + ip_src + " -u -p 5002 -S 0xC0 -l 200 -t " + str(speech_time) + " -b 200k -i 10"
-            stdout, stderr, code = run_iperf2_cmd(cmd)
+            stdout, stderr, code = _run(cmd)
             sleep(np.random.uniform(0,2))
         console.info('ENDING : VoIP - Conversational CoS 4')
 
@@ -427,7 +433,7 @@ def execute(data: bytes, ip_src, cos_id):
             #simulate tje brief traffic blast of tunning into channel while surfing
             #Interactive-Video (AF41) – ToS value 0x88
             cmd = str(iperf_path) + " -u -p 5002 -c " + ip_src + " -S 0x88 -t " + str(zap_holding_time) + " -i 10"
-            stdout, stderr, code = run_iperf2_cmd(cmd)
+            stdout, stderr, code = _run(cmd)
 
             # PHASE 2 : VISUALIZTION MODE (stead viewing)
             # Using a log-normal distribution tightly reflects the heavy-tailed times
@@ -436,7 +442,7 @@ def execute(data: bytes, ip_src, cos_id):
 
             visualization_time = np.random.uniform(60,300) 
             cmd = str(iperf_path) + " -u -p 5002 -c " + ip_src + " -S 0x88 -t " + str(visualization_time) + " -i 10" 
-            stdout, stderr, code = run_iperf2_cmd(cmd)
+            stdout, stderr, code = _run(cmd)
         console.info('ENDING : IpTV/WebTV - Interactive CoS 5')    
 
     elif cos_id == 6:
@@ -448,7 +454,7 @@ def execute(data: bytes, ip_src, cos_id):
             # flow (client<-> server) for the specified duration.
             game_duration_seconds = 600 # 10 mn pour les tests au lieu de 3600
             cmd = str(iperf_path) + " -c " + ip_src + " -b 220K -l 100 -t " + str(game_duration_seconds) + " -d -i 10"
-            stdout, stderr, code = run_iperf2_cmd(cmd)
+            stdout, stderr, code = _run(cmd)
             console.info('ENDING : Online gaming - Real-time CoS 6')
 
     elif cos_id == 7:
@@ -467,11 +473,11 @@ def execute(data: bytes, ip_src, cos_id):
                 for i in range (10):
                     # 1 - vital signs streams (Werable -> edge gateway) 2K for a standard PPG/ECG data.
                     cmd = str(iperf_path) + " -c " + ip_src + " -R -u -p 5002 -n 2K -S 0xB8 -i 10"
-                    stdout, stderr, code = run_iperf2_cmd(cmd)
+                    stdout, stderr, code = _run(cmd)
                     # 2 - Context-aware adaptation commands (e.g. change the sampling frequency).
                     if send_recommendation[i] :
                         cmd  = str(iperf_path) + " -c " + ip_src + " -u -p 5002 -n 4K -S 0xB8 -i 10"
-                        stdout, stderr, code = run_iperf2_cmd(cmd)
+                        stdout, stderr, code = _run(cmd)
                     #wait for 30 seconds between two consecutive vital sign reporting
                     sleep(30)
             console.info('ENDING : E-health - Mission critical CoS 7')
@@ -481,4 +487,8 @@ def execute(data: bytes, ip_src, cos_id):
     console.info('ending IPERF MESSAGES EXCHANGE')
     #sleep(uniform(SIM_EXEC_MIN, SIM_EXEC_MAX))
     # test if iperf exchange succeed return result or return error
+    if errors:
+        console.warning('execute cos_id %s : %d command(s) iperf fail on %s',
+                        str(cos_id), len(errors), str(ip_src))
+        return b'error'
     return b'result'
