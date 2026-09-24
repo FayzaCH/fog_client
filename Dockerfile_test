@@ -1,6 +1,12 @@
 FROM fog_client:latest
-RUN apt-get install -y \
-    iputils-ping net-tools iproute2 ethtool iw wireless-tools \
-    curl wget \
-    nano vim \
-    xterm
+RUN apt-get update \
+    && apt-get install -y \
+    iputils-ping net-tools iproute2 ethtool iw wireless-tools procps \
+    curl wget nano vim \
+    xterm \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+
+    WORKDIR /fog_client
+    COPY . .
