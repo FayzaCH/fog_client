@@ -366,7 +366,6 @@ def execute(data: bytes, ip_src, cos_id):
     iperf_path='iperf' #for both container and code client
     errors = []
     def _run(cmd):
-        stdout, stderr, code = _run(cmd)
         if code !=0:
             errors.append(cmd)
         return stdout, stderr, code
